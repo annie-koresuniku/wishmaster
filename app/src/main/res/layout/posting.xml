@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/button_back_full">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:id="@+id/mainest_main" >
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/options_row">
+
+                <TextView
+                    android:text="@string/options_text"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/options"
+                    android:layout_marginLeft="12dp"
+                    android:textAppearance="@style/TextAppearance.AppCompat"
+                    android:layout_width="70dp" />
+
+                <EditText
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:id="@+id/edit_options"
+                    android:layout_weight="1"
+                    android:hint="@string/options_text_underscored"
+                    android:inputType="none|text"
+                    android:textSize="14sp"
+                    android:background="@android:color/background_light"
+                    android:padding="6dp" />
+
+                <Button
+                    android:text="@string/send_button_text"
+                    android:id="@+id/send_button"
+                    android:layout_weight="1"
+                    android:textAppearance="@style/TextAppearance.AppCompat"
+                    android:layout_marginRight="6dp"
+                    android:layout_marginLeft="6dp"
+                    android:layout_width="70dp"
+                    android:layout_height="42dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/name_row">
+
+                <TextView
+                    android:text="@string/name_text"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/name"
+                    android:textAppearance="@style/TextAppearance.AppCompat"
+                    android:layout_marginLeft="12dp"
+                    android:layout_width="70dp" />
+
+                <EditText
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName"
+                    android:ems="10"
+                    android:id="@+id/edit_name"
+                    android:layout_weight="1"
+                    android:textSize="14sp"
+                    android:hint="@string/name_text_underscored"
+                    android:background="@android:color/background_light"
+                    android:padding="6dp"
+                    android:layout_marginRight="6dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/subject_row"
+                android:layout_marginTop="6dp">
+
+                <TextView
+                    android:text="@string/subject_text"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/subject"
+                    android:textAppearance="@style/TextAppearance.AppCompat"
+                    android:layout_marginLeft="12dp" />
+
+                <EditText
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName"
+                    android:ems="10"
+                    android:id="@+id/edit_subject"
+                    android:hint="@string/subject_text_underscored"
+                    android:layout_weight="1"
+                    android:background="@android:color/background_light"
+                    android:padding="6dp"
+                    android:layout_marginRight="6dp"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/post_row"
+                android:layout_marginTop="6dp">
+
+                <TextView
+                    android:text="@string/post_text"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/post"
+                    android:textAppearance="@style/TextAppearance.AppCompat"
+                    android:layout_marginLeft="12dp"
+                    android:elevation="0dp"
+                    android:layout_width="70dp"
+                    android:layout_gravity="start" />
+
+                <EditText
+                    android:layout_width="wrap_content"
+                    android:inputType="textPersonName"
+                    android:ems="10"
+                    android:id="@+id/edit_post"
+                    android:textSize="14sp"
+                    android:background="@android:color/background_light"
+                    android:padding="6dp"
+                    android:layout_weight="1"
+                    android:layout_marginRight="6dp"
+                    android:layout_height="200dp"
+                    android:gravity="top|center_vertical"
+                    android:textColor="?attr/colorControlNormal"
+                    android:hint="@string/post_text_underscored" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/sage_op_row">
+
+                <Space
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="12dp" />
+
+                <CheckBox
+                    android:text="@string/sage_checkbox_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/checkBox"
+                    android:layout_weight="1"
+                    tools:text="@string/sage_checkbox_text" />
+
+                <CheckBox
+                    android:text="@string/op_checkbox_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/checkBox2"
+                    android:layout_weight="1"
+                    tools:text="@string/op_checkbox_text" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/files_row">
+
+                <TextView
+                    android:text="@string/files_text"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/files"
+                    android:layout_marginLeft="12dp"
+                    android:textAppearance="@style/TextAppearance.AppCompat" />
+
+                <TextView
+                    android:text="files_names"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/files_names"
+                    android:layout_weight="1" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/captcha_row">
+
+                <TextView
+                    android:text="@string/captcha_text"
+                    android:layout_width="70dp"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/captcha"
+                    android:textAppearance="@style/TextAppearance.AppCompat"
+                    android:layout_marginLeft="12dp" />
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        app:srcCompat="@drawable/load_2"
+                        android:id="@+id/captcha_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="120dp" />
+
+                    <EditText
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="textPersonName"
+                        android:ems="10"
+                        android:id="@+id/edit_captcha_answer"
+                        android:background="@android:color/background_light"
+                        android:padding="6dp"
+                        android:layout_marginTop="6dp"
+                        android:layout_marginBottom="6dp"
+                        android:layout_marginRight="6dp"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>

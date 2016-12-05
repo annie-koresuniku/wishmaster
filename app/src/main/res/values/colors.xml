@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#ff7000</color>
+    <color name="colorPrimaryDark">#ce5703</color>
+    <color name="colorAccent">#FF7000</color>
+    <color name="background_color_custom">#f9f5f5f5</color>
+    <color name="canva_color_custom">#fcfcfc</color>
+    <color name="text_main_grey">#8e5a5a5a</color>
+    <color name="button_back">#f9f0f0f0</color>
+    <color name="background_blue">#2c0066ff</color>
+    <color name="transparent">#00ffffff</color>
+    <color name="text_main_grey_dark">#101010</color>
+    <color name="text_custom">#3b3b3b</color>
+    <color name="button_back_full">#efefef</color>
+</resources>

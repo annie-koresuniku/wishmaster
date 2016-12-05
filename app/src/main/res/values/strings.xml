@@ -1,0 +1,26 @@
+<resources xmlns:android="http://schemas.android.com/tools">
+    <string name="app_name">Wishmaster</string>
+    <string name="main_text_first">Два.ч - это система форумов, где можно общаться быстро и свободно, где любая точка зрения имеет право на жизнь.
+        Здесь нет регистрации и подписываться не нужно, хотя это не избавляет вас от необходимости соблюдать правила.
+        Все форумы (кроме /Б/реда), а их список находится снизу, имеют собственную чётко ограниченную тематику.
+        Словом, всё, что не запрещено правилами отдельно взятого форума и относится к его тематике, на этом форуме разрешено. </string>
+    <string name="settings_text">Settings</string>
+    <string name="adult_text">Взрослым</string>
+    <string name="loading_text">Загрузка борд...</string>
+    <string name="error_404">404</string>
+    <string name="nothing_found">Ничего не найдено</string>
+    <string name="options_text">Опции</string>
+    <string name="options_text_underscored">опции</string>
+    <string name="send_button_text">Отправить</string>
+    <string name="name_text">Имя</string>
+    <string name="name_text_underscored">имя</string>
+    <string name="subject_text">Тема</string>
+    <string name="subject_text_underscored">тема</string>
+    <string name="post_text">Пост</string>
+    <string name="post_text_underscored">Комментарий. Макс. длина 15000</string>
+    <string name="sage_checkbox_text">sage</string>
+    <string name="op_checkbox_text">ОП треда</string>
+    <string name="attached_files_text">Прикрепленные файлы:</string>
+    <string name="files_text">Файлы</string>
+    <string name="captcha_text">Капча</string>
+</resources>

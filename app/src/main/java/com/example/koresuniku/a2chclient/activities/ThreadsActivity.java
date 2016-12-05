@@ -1,0 +1,718 @@
+package com.example.koresuniku.a2chclient.activities;
+
+
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.view.menu.ActionMenuItemView;
+import android.text.Html;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.RelativeSizeSpan;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.BaseAdapter;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+
+import com.example.koresuniku.a2chclient.R;
+import com.example.koresuniku.a2chclient.utilities.Constants;
+import com.squareup.picasso.Picasso;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.example.koresuniku.a2chclient.utilities.Constants.BOARD;
+import static com.example.koresuniku.a2chclient.utilities.Constants.PAGE;
+
+public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
+    private static final String LOG_TAG = ThreadsActivity.class.getSimpleName();
+    private String intentBoard;
+    private String intentPage;
+    private int chosenPage = 0;
+
+    private String boardName;
+    private String pagesOnBoard;
+    private String defaultOpName;
+    private String subjectOfThread;
+    private String opName;
+    private String date;
+    private String number;
+    private String thumb;
+    private String comment;
+    private String op;
+    private String answersCount;
+    private String filesCount;
+    private String size;
+    private String width;
+    private String height;
+    private String fullname;
+    private String path;
+    private String duration;
+
+    private ArrayList<ArrayList<Map<String, String>>> threadsList = new ArrayList<>();
+
+    private ListView mThreadsListView;
+    private LayoutInflater mLayoutInflater;
+    private SwipeRefreshLayout swipeRefreshLayout;
+    private ProgressBar progressBar;
+    private FrameLayout frameLayoutInner;
+    private MenuItem mPageIndex;
+
+    private static int position;
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        intentBoard = savedInstanceState.getString(BOARD);
+        chosenPage = Integer.parseInt(savedInstanceState.getString(PAGE));
+        intentPage = String.valueOf(chosenPage);
+        super.onRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(Constants.BOARD, intentBoard);
+        outState.putString(Constants.PAGE, String.valueOf(chosenPage));
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+
+        ;
+        intentBoard = getIntent().getStringExtra(BOARD);
+        intentPage = getIntent().getStringExtra(PAGE);
+
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh);
+        swipeRefreshLayout.setOnRefreshListener(this);
+        mLayoutInflater = getLayoutInflater();
+        mThreadsListView = (ListView) findViewById(R.id.threads_listview);
+        mThreadsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                position = mThreadsListView.getPositionForView(view);
+                Log.i(LOG_TAG, "On click position " + String.valueOf(position));
+                ArrayList<Map<String, String>> threadPageClicked = threadsList.get(chosenPage);
+                Map<String, String> itemThreadClicked = threadPageClicked.get(i);
+                String threadNumber = itemThreadClicked.get(Constants.NUMBER);
+
+                Intent intent = new Intent(getApplicationContext(), SingleThreadActivity.class);
+                intent.putExtra(Constants.NUMBER, threadNumber);
+                intent.putExtra(Constants.BOARD, intentBoard);
+                Log.i(LOG_TAG, "Chosen Page " + chosenPage);
+                intent.putExtra(Constants.PAGE, String.valueOf(chosenPage));
+                startActivity(intent);
+            }
+        });
+
+
+
+    }
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setTitle("");
+
+        setContentView(R.layout.threads_layout_container);
+        progressBar = (ProgressBar) findViewById(R.id.progressBar);
+        frameLayoutInner = (FrameLayout) findViewById(R.id.threads_layout_containe_inner);
+        frameLayoutInner.setVisibility(View.GONE);
+        position = 0;
+        GetPagesOnBoardTask pagesOnBoardTask = new GetPagesOnBoardTask();
+        pagesOnBoardTask.execute();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.threads_menu, menu);
+        mPageIndex = menu.findItem(R.id.page_index);
+        mPageIndex.setTitle(intentPage);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        switch (id) {
+            case R.id.back_item: {
+                if (chosenPage != 0) {
+                    chosenPage--;
+                    ThreadsAdapter adapter = new ThreadsAdapter(getApplicationContext(), threadsList.get(chosenPage));
+                    mThreadsListView.setAdapter(adapter);
+                    Log.v(LOG_TAG, "Back item pressed, go to page " + chosenPage);
+                    mPageIndex.setTitle(String.valueOf(chosenPage));
+                } break;
+            }
+            case R.id.forward_item: {
+                int pagesOnBoardL = Integer.parseInt(pagesOnBoard);
+                if (chosenPage <= pagesOnBoardL - 3) {
+                    chosenPage++;
+                    ThreadsAdapter adapter = new ThreadsAdapter(getApplicationContext(), threadsList.get(chosenPage));
+                    mThreadsListView.setAdapter(adapter);
+                    Log.v(LOG_TAG, "Forward item pressed, go to page " + chosenPage);
+                    mPageIndex.setTitle(String.valueOf(chosenPage));
+                } break;
+            }
+            case android.R.id.home: {
+                Log.i(LOG_TAG, "Action home");
+
+                onBackPressed();
+                break;
+            }
+
+        }
+        return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        startActivity(intent);
+    }
+
+    public boolean isOnline() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
+    }
+
+    @Override
+    public void onRefresh() {
+        swipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                swipeRefreshLayout.setRefreshing(true);
+                Intent intent = new Intent(getApplicationContext(), ThreadsActivity.class);
+                intent.putExtra(BOARD, intentBoard);
+                intent.putExtra(PAGE, "0");
+                Log.i(LOG_TAG, "Before startActivity");
+                startActivity(intent);
+                Log.i(LOG_TAG, "After startActivity");
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
+
+    }
+
+    private class ThreadsAdapter extends BaseAdapter {
+        private ArrayList<Map<String, String>> threadsList = new ArrayList<>();
+        private Context mContext;
+        private ViewHolder viewHolder;
+
+        public ThreadsAdapter(Context context, ArrayList<Map<String, String>> list) {
+            mContext = context;
+            threadsList = list;
+        }
+
+        @Override
+        public int getCount() {
+            return threadsList.size();
+        }
+
+        @Override
+        public Map<String, String> getItem(int i) {
+            return threadsList.get(i);
+        }
+
+        @Override
+        public long getItemId(int i) {
+            Map<String, String> item = threadsList.get(i);
+            return threadsList.indexOf(item);
+        }
+
+        @Override
+        public View getView(int i, View view, ViewGroup viewGroup) {
+            View rootView = mLayoutInflater.inflate(R.layout.thread_item_single_image, viewGroup, false);
+            viewHolder = new ViewHolder();
+
+            Map<String, String> item = getItem(i);
+            String date = item.get(Constants.DATE);
+            String number = item.get(Constants.NUMBER);
+            final String thumb = item.get(Constants.THUMB);
+            String comment = item.get(Constants.COMMENT);
+            String op = item.get(Constants.OP);
+            String answersCount = item.get(Constants.ANSWERS_COUNT);
+            String filesCount = item.get(Constants.FILES_COUNT);
+            String subjectOfThread = item.get(Constants.SUBJECT_OF_THREAD);
+            String opName = item.get(Constants.OP_NAME);
+            String displayName = item.get(Constants.DISPLAY_NAME);
+            String size = item.get(Constants.SIZE);
+            String width = item.get(Constants.WIDTH);
+            String height = item.get(Constants.HEIGHT);
+            String path = item.get(Constants.PATH);
+            String duration = item.get(Constants.DURATION);
+
+            viewHolder.mThreadItemHeader =
+                    (TextView) rootView.findViewById(R.id.thread_item_header);
+            viewHolder.mThreadItemImage =
+                    (ImageView) rootView.findViewById(R.id.thread_item_image);
+
+            viewHolder.mThreadItemBody =
+                    (TextView) rootView.findViewById(R.id.thread_item_body);
+            viewHolder.mThreadItemAnswersAndFiles =
+                    (TextView) rootView.findViewById(R.id.thread_item_answers_and_files);
+            viewHolder.mThreadItemShortInfo =
+                    (TextView) rootView.findViewById(R.id.short_info_view);
+            rootView.setTag(viewHolder);
+
+            String shortInfo = "(" + size + "Кб, " + width + "x" + height + ")";
+
+            if (duration != null) {
+                if (!duration.equals("")) {
+                    shortInfo = shortInfo.substring(0, shortInfo.length() - 1);
+                    shortInfo += ", " + duration + ")";
+                }
+            }
+            viewHolder.mThreadItemShortInfo.setText(shortInfo);
+            if (op.equals("0")) {
+                op = "";
+            } else {
+                op = "<font color=\"#008000\"># OP</font>";
+            }
+            SpannableStringBuilder builderHeader = new SpannableStringBuilder();
+            if (subjectOfThread.equals("")
+                    || intentBoard.equals("b") || subjectOfThread.equals(" ") ) {
+                subjectOfThread = "";
+            } else {
+                subjectOfThread ="<b><font color=\"#002249\">" + subjectOfThread + "</font></b>";
+            }
+            if (opName.equals("")) {
+                opName = defaultOpName;
+            }
+            builderHeader.append(subjectOfThread + " ");
+            builderHeader.append(opName + " ");
+            builderHeader.append(op + " ");
+            builderHeader.append(date + " ");
+            builderHeader.append(number);
+
+            viewHolder.mThreadItemHeader.setText(
+                    Html.fromHtml(builderHeader.toString()), TextView.BufferType.SPANNABLE);
+            if (!(thumb.equals(""))) {
+                Log.i(LOG_TAG, "Path " + path);
+                if (path.substring(path.length() - 4, path.length()).equals("webm")) {
+                    Picasso.with(mContext).load("https://2ch.hk/" + thumb)
+                            .into(viewHolder.mThreadItemImage);
+
+                } else {
+                    ImageView webmImageview = (ImageView) rootView.findViewById(R.id.webm_imageview);
+                    webmImageview.setVisibility(View.GONE);
+                    Picasso.with(mContext).load("https://2ch.hk/" + thumb)
+                            .into(viewHolder.mThreadItemImage);
+                }
+            } else {
+                FrameLayout imageContainer =
+                        (FrameLayout) rootView.findViewById(R.id.image_item_container);
+                imageContainer.setVisibility(View.GONE);
+
+            }
+            SpannableStringBuilder builderBody = new SpannableStringBuilder();
+            builderBody.append(comment);
+            viewHolder.mThreadItemBody.setText(
+                    Html.fromHtml(builderBody.toString()), TextView.BufferType.SPANNABLE);
+            int lines = viewHolder.mThreadItemBody.getLineCount();
+            if (lines >= 6) {
+                builderBody.append(" ...");
+                viewHolder.mThreadItemBody.setText(Html.fromHtml(builderBody.toString()),
+                        TextView.BufferType.SPANNABLE);
+            }
+
+            int remainderAnswers = Integer.parseInt(
+                    answersCount.substring(answersCount.length() - 1, answersCount.length()));
+            int remainderFiles = Integer.parseInt(
+                    filesCount.substring(filesCount.length() - 1, filesCount.length()));
+
+            String missedPosts = "";
+            switch (remainderAnswers) {
+                case 1: {
+                    if (answersCount.length() >= 2) {
+                        if (!answersCount.substring(
+                                answersCount.length() - 2, answersCount.length()).equals("11")) {
+                            missedPosts = "Пропущен " + answersCount + " пост";
+                            break;
+                        } else {
+                            missedPosts = "Пропущено " + answersCount + " постов";
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case 2: {
+                    if (answersCount.length() >= 2) {
+                        if (!answersCount.substring(
+                                answersCount.length() - 2, answersCount.length()).equals("12")) {
+                            missedPosts = "Пропущено " + answersCount + " поста";
+                            break;
+                        } else {
+                            missedPosts = "Пропущено " + answersCount + " постов";
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case 3: {
+                    if (answersCount.length() >= 2) {
+                        if (!answersCount.substring(
+                                answersCount.length() - 2, answersCount.length()).equals("13")) {
+                            missedPosts = "Пропущено " + answersCount + " поста";
+                            break;
+                        } else {
+                            missedPosts = "Пропущено " + answersCount + " постов";
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case 4: {
+                    if (answersCount.length() >= 2) {
+                        if (!answersCount.substring(
+                                answersCount.length() - 2, answersCount.length()).equals("14")) {
+                            missedPosts = "Пропущено " + answersCount + " поста";
+                            break;
+                        } else {
+                            missedPosts = "Пропущено " + answersCount + " постов";
+                            break;
+                        }
+                    }
+                    break;
+                }
+                default: {
+                    missedPosts = "Пропущено " + answersCount + " постов";
+                }
+            }
+            String filesNumber = "";
+            switch (remainderFiles) {
+                case 1: {
+                    if (answersCount.length() >= 2) {
+                        if (!answersCount.substring(
+                                answersCount.length() - 2, answersCount.length()).equals("11")) {
+                            filesNumber = ", " + filesCount + " файл";
+                            break;
+                        } else {
+                            filesNumber = ", " + filesCount + " файлов";
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case 2: {
+                    if (answersCount.length() >= 2) {
+                        if (!answersCount.substring(
+                                answersCount.length() - 2, answersCount.length()).equals("12")) {
+                            filesNumber = ", " + filesCount + " файла";
+                            break;
+                        } else {
+                            filesNumber = ", " + filesCount + " файлов";
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case 3: {
+                    if (answersCount.length() >= 2) {
+                        if (!answersCount.substring(
+                                answersCount.length() - 2, answersCount.length()).equals("13")) {
+                            filesNumber = ", " + filesCount + " файла";
+                            break;
+                        } else {
+                            filesNumber = ", " + filesCount + " файлов";
+                            break;
+                        }
+                    }
+                    break;
+                }
+                case 4: {
+                    if (answersCount.length() >= 2) {
+                        if (!answersCount.substring(
+                                answersCount.length() - 2, answersCount.length()).equals("14")) {
+                            filesNumber = ", " + filesCount + " файла";
+                            break;
+                        } else {
+                            filesNumber = ", " + filesCount + " файлов";
+                            break;
+                        }
+                    }
+                    break;
+                }
+                default: {
+                    filesNumber = ", " + filesCount + " файлов";
+                }
+            }
+            if (missedPosts.equals("") && !filesNumber.equals("")) {
+                filesNumber = filesNumber.substring(2, filesNumber.length());
+            }
+
+            if ((missedPosts + filesNumber).equals("")) {
+                viewHolder.mThreadItemAnswersAndFiles.setVisibility(View.GONE);
+            } else {
+                viewHolder.mThreadItemAnswersAndFiles.setText(missedPosts + filesNumber);
+            }
+
+            return rootView;
+        }
+    }
+
+    private class ViewHolder {
+        TextView mThreadItemHeader;
+        ImageView mThreadItemImage;
+        TextView mThreadItemBody;
+        TextView mThreadItemAnswersAndFiles;
+        TextView mThreadItemDisplayName;
+        TextView mThreadItemShortInfo;
+    }
+
+    private class GetPagesOnBoardTask extends AsyncTask<Void, Void, String> {
+
+        @Override
+        protected String doInBackground(Void... voids) {
+            if (isOnline()) {
+                try {
+                    URL url = new URL("https://2ch.hk/" + intentBoard + "/index" + ".json");
+
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.connect();
+
+                    int responseCode = connection.getResponseCode();
+                    Log.v("Response Code ", String.valueOf(responseCode));
+                    if (responseCode == 404) {
+                        Intent intent = new Intent(getApplicationContext(), ErrorActivity.class);
+                        startActivity(intent);
+                        return null;
+                    } else {
+                        StringBuilder builder = new StringBuilder();
+                        BufferedReader reader = new BufferedReader(
+                                new InputStreamReader(connection.getInputStream()));
+
+
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            builder.append(line);
+                        }
+
+                        String rawJSON = builder.toString();
+                        return result(rawJSON);
+                    }
+
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (ProtocolException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            pagesOnBoard = s;
+            if (pagesOnBoard != null) {
+                Log.v(LOG_TAG, "Pages on board " + pagesOnBoard);
+                ThreadsTask threadsTask = new ThreadsTask(getApplicationContext());
+                threadsTask.execute();
+            }
+        }
+
+        private String result(String rawJSON) {
+            try {
+                JSONObject main = new JSONObject(rawJSON);
+                JSONArray pagesArray = main.getJSONArray("pages");
+                return String.valueOf(pagesArray.length());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+    private class ThreadsTask extends AsyncTask<Void, Void, ArrayList<ArrayList<Map<String, String>>>> {
+        private final String LOG_TAG = ThreadsTask.class.getSimpleName();
+        private Context mContext;
+        private boolean startAdapter = true;
+        private ArrayList<Map<String, String>> localItem;
+
+        public ThreadsTask(Context context) {
+            this.mContext = context;
+        }
+
+        @Override
+        protected ArrayList<ArrayList<Map<String, String>>> doInBackground(Void... strings) {
+            Log.v(LOG_TAG, "Inside doInBackground()");
+            int counter = -1;
+            URL url;
+            try {
+
+                for(int i = 0; i < Integer.parseInt(pagesOnBoard) - 1; i++) {
+                    counter++;
+                    if (counter == 0) {
+                        url = new URL("https://2ch.hk/" + intentBoard + "/index" + ".json");
+                    } else {
+                        url = new URL("https://2ch.hk/" + intentBoard + "/" + counter +".json");
+                    }
+
+                    Log.v(LOG_TAG, "Counter " + counter);
+
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setRequestMethod("GET");
+                    connection.connect();
+
+                    int responseCode = connection.getResponseCode();
+                    Log.v(LOG_TAG, "Response Code " + connection.getResponseCode());
+
+                    if (responseCode == 404) {
+                        Intent intent = new Intent(getApplicationContext(), ErrorActivity.class);
+                        startActivity(intent);
+                    } else {
+                        StringBuilder builder = new StringBuilder();
+                        BufferedReader reader = new BufferedReader(
+                                new InputStreamReader(connection.getInputStream()));
+
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            builder.append(line);
+                        }
+
+                        String rawJSON = builder.toString();
+                        localItem = formatJSON(rawJSON);
+                        threadsList.add(localItem);
+                    }
+                }
+                return threadsList;
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (ProtocolException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<ArrayList<Map<String, String>>> maps) {
+            Log.v(LOG_TAG, "Inside onPostExecute() " + intentPage);
+
+                if (startAdapter) {
+                   // setContentView(R.layout.threads_layout_container);
+                    ThreadsAdapter adapter = new ThreadsAdapter(mContext, threadsList.get(Integer.parseInt(intentPage)));
+                    mThreadsListView.setAdapter(adapter);
+                    frameLayoutInner.setVisibility(View.VISIBLE);
+                    progressBar.setVisibility(View.GONE);
+                    setTitle(boardName);
+                }
+            }
+        }
+
+        private ArrayList<Map<String, String>> formatJSON(String rawJSON) {
+            ArrayList<Map<String, String>> result = new ArrayList<>();
+            Map<String, String> item;
+            try {
+                JSONObject main = new JSONObject(rawJSON);
+                boardName = main.getString("BoardName");
+                defaultOpName = main.getString("default_name");
+                JSONArray threadsArray = main.getJSONArray("threads");
+
+                    for (int v = 0; v < threadsArray.length(); v++) {
+                        JSONObject thread = threadsArray.getJSONObject(v);
+
+                        answersCount = thread.getString("posts_count");
+                        number = thread.getString("thread_num");
+                        filesCount = thread.getString("files_count");
+
+                        JSONArray postArray = thread.getJSONArray("posts");
+                        JSONObject post = postArray.getJSONObject(0);
+                        date = post.getString("date");
+                        op = post.getString("op");
+                        comment = post.getString("comment");
+                        subjectOfThread = post.getString("subject");
+                        opName = post.getString("name");
+
+                        JSONArray filesArray = post.getJSONArray("files");
+                        if (!(filesArray.length() == 0)) {
+                            JSONObject file = filesArray.getJSONObject(0);
+                            thumb = file.getString("thumbnail");
+                            path = file.getString("path");
+                            size = file.getString("size");
+                            width = file.getString("width");
+                            height = file.getString("height");
+                            if (path.substring(path.length() - 4, path.length()).equals("webm")) {
+                                duration = file.getString("duration");
+                            } else {
+                                duration = "";
+                            }
+                        } else {
+                            thumb = "";
+                        }
+
+
+                        item = new HashMap<>();
+                        item.put(Constants.ANSWERS_COUNT, answersCount);
+                        item.put(Constants.NUMBER, number);
+                        item.put(Constants.FILES_COUNT, filesCount);
+                        item.put(Constants.DATE, date);
+                        item.put(Constants.OP, op);
+                        item.put(Constants.COMMENT, comment);
+                        item.put(Constants.THUMB, thumb);
+                        item.put(Constants.SUBJECT_OF_THREAD, subjectOfThread);
+                        item.put(Constants.OP_NAME, opName);
+                        //item.put(Constants.DISPLAY_NAME, displayName);
+                        item.put(Constants.SIZE, size);
+                        item.put(Constants.HEIGHT, height);
+                        item.put(Constants.WIDTH, width);
+                        item.put(Constants.PATH, path);
+                        item.put(Constants.DURATION, duration);
+
+                        result.add(item);
+                    }
+
+                    return result;
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+
+

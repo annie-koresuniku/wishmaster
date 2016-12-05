@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:title="Item"
+        app:showAsAction="always"
+        android:id="@+id/action_write"
+        android:icon="@drawable/ic_create_white_48dp" />
+    <item android:title="Item"
+        android:icon="@drawable/refresh_action"
+        android:id="@+id/action_refresh"
+        app:showAsAction="always" />
+    <item android:title="Item"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_save_white_48dp"
+        android:id="@+id/action_save" />
+    <item android:title="Item"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_attach_file_white_48dp"
+        android:id="@+id/action_attach" />
+    <item android:title="Item"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_close_white_48dp"
+        android:id="@+id/action_close" />
+    <item android:title="Item"
+        android:id="@+id/action_refresh_single"
+        app:showAsAction="always"
+        android:icon="@drawable/refresh_action" />
+</menu>
