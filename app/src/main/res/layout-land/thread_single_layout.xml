@@ -2,7 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/threads_layout_container">
+    android:id="@+id/threads_layout_container"
+    >
 
 
     <ProgressBar
@@ -17,45 +18,45 @@
         android:layout_height="match_parent"
         android:id="@+id/threads_layout_containe_inner">
 
-            <ListView
+        <ListView
+            android:layout_width="match_parent"
+            android:id="@+id/threads_listview"
+            android:layout_height="wrap_content"
+            android:clickable="false" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/tint_view"
+            android:background="@color/text_main_grey"
+            android:visibility="gone">
+
+        </FrameLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:id="@+id/scroll_item_context"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:layout_marginTop="50dp"
+            android:layout_marginBottom="50dp">
+
+            <RelativeLayout
                 android:layout_width="match_parent"
-                android:id="@+id/threads_listview"
-                android:layout_height="wrap_content"
-                android:clickable="false" />
+                android:layout_height="wrap_content">
 
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:id="@+id/tint_view"
-                android:background="@color/text_main_grey"
-                android:visibility="gone">
+                <FrameLayout
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:id="@+id/context_item"
+                    android:foregroundGravity="center"
+                    android:layout_width="match_parent">
 
-            </FrameLayout>
-
-            <ScrollView
-                android:layout_width="match_parent"
-                android:id="@+id/scroll_item_context"
-                android:layout_gravity="center"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="12dp"
-                android:layout_marginRight="12dp"
-                android:layout_marginTop="50dp"
-                android:layout_marginBottom="50dp">
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <FrameLayout
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:id="@+id/context_item"
-                        android:foregroundGravity="center"
-                        android:layout_width="match_parent">
-
-                    </FrameLayout>
-                </RelativeLayout>
-            </ScrollView>
+                </FrameLayout>
+            </RelativeLayout>
+        </ScrollView>
 
 
     </FrameLayout>
@@ -105,18 +106,9 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/text_main_grey"
-        android:id="@+id/tint_for_media"
-        android:visibility="gone">
-
-    </FrameLayout>
-
-    <FrameLayout
-        android:layout_width="match_parent"
         android:id="@+id/fragment_post_container"
         android:layout_gravity="bottom"
-        android:visibility="visible"
+        android:visibility="gone"
         android:layout_height="wrap_content">
 
     </FrameLayout>

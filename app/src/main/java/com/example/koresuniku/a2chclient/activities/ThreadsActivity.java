@@ -3,30 +3,22 @@ package com.example.koresuniku.a2chclient.activities;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
-import android.graphics.Paint;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.menu.ActionMenuItemView;
 import android.text.Html;
-import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.RelativeSizeSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
@@ -36,6 +28,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.example.koresuniku.a2chclient.R;
+import com.example.koresuniku.a2chclient.fragments.PostFragment;
 import com.example.koresuniku.a2chclient.utilities.Constants;
 import com.squareup.picasso.Picasso;
 
@@ -59,7 +52,7 @@ import static com.example.koresuniku.a2chclient.utilities.Constants.PAGE;
 
 public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     private static final String LOG_TAG = ThreadsActivity.class.getSimpleName();
-    private String intentBoard;
+    public static String intentBoard;
     private String intentPage;
     private int chosenPage = 0;
 
@@ -81,6 +74,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
     private String fullname;
     private String path;
     private String duration;
+    private boolean postingFragmentAvailable;
 
     private ArrayList<ArrayList<Map<String, String>>> threadsList = new ArrayList<>();
 
@@ -90,8 +84,14 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
     private ProgressBar progressBar;
     private FrameLayout frameLayoutInner;
     private MenuItem mPageIndex;
+    private FrameLayout postingFragmentContainer;
+    private PostFragment pf;
+    public static Menu mMenu;
 
     private static int position;
+
+    public static Animation fallingUp;
+    public static Animation fallingDown;
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
@@ -112,10 +112,10 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
     protected void onStart() {
         super.onStart();
 
-
-        ;
         intentBoard = getIntent().getStringExtra(BOARD);
         intentPage = getIntent().getStringExtra(PAGE);
+
+        postingFragmentAvailable = false;
 
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh);
         swipeRefreshLayout.setOnRefreshListener(this);
@@ -138,9 +138,10 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                 startActivity(intent);
             }
         });
-
-
-
+        postingFragmentContainer = (FrameLayout) findViewById(R.id.posting_fragment_container);
+        fallingUp = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.falling_up);
+        fallingDown = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.falling_down);
+        pf = new PostFragment(getApplicationContext());
     }
 
 
@@ -163,6 +164,9 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         getMenuInflater().inflate(R.menu.threads_menu, menu);
         mPageIndex = menu.findItem(R.id.page_index);
         mPageIndex.setTitle(intentPage);
+        MenuItem actionSend = menu.findItem(R.id.action_send);
+        actionSend.setVisible(false);
+        mMenu = menu;
         return true;
     }
 
@@ -192,17 +196,82 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
             }
             case android.R.id.home: {
                 Log.i(LOG_TAG, "Action home");
-
                 onBackPressed();
                 break;
             }
-
+            case R.id.action_write: {
+                Log.i(LOG_TAG, "Action new thread");
+                actionWrite();
+            }
         }
         return true;
     }
 
+    private void actionWrite() {
+        postingFragmentAvailable = true;
+        MenuItem actionSend = mMenu.findItem(R.id.action_send);
+        actionSend.setVisible(true);
+        MenuItem actionWrite = mMenu.findItem(R.id.action_write);
+        actionWrite.setVisible(false);
+        MenuItem backItem = mMenu.findItem(R.id.back_item);
+        backItem.setVisible(false);
+        MenuItem pageIndex = mMenu.findItem(R.id.page_index);
+        pageIndex.setVisible(false);
+        MenuItem forwardItem = mMenu.findItem(R.id.forward_item);
+        forwardItem.setVisible(false);
+        Log.i(LOG_TAG, "postingFragmentContainre " + (postingFragmentContainer != null));
+        postingFragmentContainer.setAnimation(fallingUp);
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.posting_fragment_container, pf)
+                .commit();
+        postingFragmentContainer.startAnimation(fallingUp);
+        Log.i(LOG_TAG, "Post animation");
+    }
+
+    public void closePostingFragment() {
+
+        postingFragmentContainer.setAnimation(fallingDown);
+        Log.i(LOG_TAG, "Before start animation falling down");
+        postingFragmentContainer.startAnimation(fallingDown);
+        fallingDown.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                getSupportFragmentManager().beginTransaction()
+                        .remove(pf)
+                        .commit();
+                MenuItem actionSend = mMenu.findItem(R.id.action_send);
+                actionSend.setVisible(false);
+                MenuItem actionWrite = mMenu.findItem(R.id.action_write);
+                actionWrite.setVisible(true);
+                MenuItem backItem = mMenu.findItem(R.id.back_item);
+                backItem.setVisible(true);
+                MenuItem pageIndex = mMenu.findItem(R.id.page_index);
+                pageIndex.setVisible(true);
+                MenuItem forwardItem = mMenu.findItem(R.id.forward_item);
+                forwardItem.setVisible(true);
+                //fragmentCotainer.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        ////fragmentCotainer.setOnClickListener(null);
+    }
+
     @Override
     public void onBackPressed() {
+        if (postingFragmentAvailable) {
+            closePostingFragment();
+            postingFragmentAvailable = false;
+            return;
+        }
         super.onBackPressed();
         Intent intent = new Intent(getApplicationContext(), MainActivity.class);
         startActivity(intent);

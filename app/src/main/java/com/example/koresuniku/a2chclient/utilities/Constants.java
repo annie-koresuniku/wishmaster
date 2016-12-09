@@ -4,6 +4,7 @@ package com.example.koresuniku.a2chclient.utilities;
 import com.example.koresuniku.a2chclient.R;
 import com.example.koresuniku.a2chclient.boards_database.BoardsContract;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class Constants {
@@ -55,6 +56,8 @@ public class Constants {
     public static final String DURATION = "duration";
     public static final String FROM_THREAD = "from_thread";
     public static final String EMAIL = "email";
+
+    public static File DIRECTORY = null;
 
 
     public static final Integer[] ERROR_IMAGES = {

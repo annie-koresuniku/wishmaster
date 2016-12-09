@@ -4,13 +4,13 @@
         Здесь нет регистрации и подписываться не нужно, хотя это не избавляет вас от необходимости соблюдать правила.
         Все форумы (кроме /Б/реда), а их список находится снизу, имеют собственную чётко ограниченную тематику.
         Словом, всё, что не запрещено правилами отдельно взятого форума и относится к его тематике, на этом форуме разрешено. </string>
-    <string name="settings_text">Settings</string>
+    <string name="new_thread_text">Создать тред</string>
     <string name="adult_text">Взрослым</string>
     <string name="loading_text">Загрузка борд...</string>
     <string name="error_404">404</string>
     <string name="nothing_found">Ничего не найдено</string>
-    <string name="options_text">Опции</string>
-    <string name="options_text_underscored">опции</string>
+    <string name="options_text">Email</string>
+    <string name="options_text_underscored">email</string>
     <string name="send_button_text">Отправить</string>
     <string name="name_text">Имя</string>
     <string name="name_text_underscored">имя</string>
@@ -23,4 +23,5 @@
     <string name="attached_files_text">Прикрепленные файлы:</string>
     <string name="files_text">Файлы</string>
     <string name="captcha_text">Капча</string>
+    <string name="spinner_text">опции</string>
 </resources>

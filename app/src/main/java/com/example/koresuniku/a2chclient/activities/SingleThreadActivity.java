@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,32 +12,30 @@ import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
-import android.text.Spanned;
-import android.text.style.ForegroundColorSpan;
-import android.text.style.UnderlineSpan;
-import android.util.ArrayMap;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.ScaleGestureDetector;
-import android.view.Surface;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.MediaController;
+import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.ScrollView;
@@ -48,18 +45,14 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.example.koresuniku.a2chclient.R;
 import com.example.koresuniku.a2chclient.fragments.PostFragment;
 import com.example.koresuniku.a2chclient.utilities.Constants;
 import com.example.koresuniku.a2chclient.utilities.CustomLinkMovementMethod;
 import com.google.android.exoplayer2.DefaultLoadControl;
-import com.google.android.exoplayer2.ExoPlaybackException;
-import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
@@ -81,9 +74,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -141,6 +137,8 @@ public class SingleThreadActivity extends AppCompatActivity {
     private static boolean needToCloseContextView;
     private boolean imageAdapterIsFinalized;
     private static boolean postingFragmentAvailable;
+    private int pageSelected;
+    private boolean firstTimeImageAdapterInitialized;
 
     ViewPager viewPager;
     ImageAdapter adapterI;
@@ -173,9 +171,13 @@ public class SingleThreadActivity extends AppCompatActivity {
     private FrameLayout mThreadsLayoutContainer;
     public static FrameLayout fragmentCotainer;
     public static RelativeLayout imageViewContainer;
-    private FrameLayout left;
-    private FrameLayout right;
     public static Menu mMenu;
+    private SingleThreadActivity thisActivity;
+    public static FrameLayout fragmentPostContainer;
+    private FrameLayout tintForMedia;
+    public static Animation fallingUp;
+    public static Animation fallingDown;
+
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -206,8 +208,11 @@ public class SingleThreadActivity extends AppCompatActivity {
         imageAdapterIsFinalized = true;
         postingFragmentAvailable = false;
         utilPosition = 0;
+        thisActivity = this;
+        pageSelected = 0;
+        firstTimeImageAdapterInitialized = true;
 
-        pf = new PostFragment(getApplicationContext(), this);
+        //pf = new PostFragment(getApplicationContext(), this, null);
 
         playerViews = new HashMap<>();
         openedPlayersToRelease = new HashMap<>();
@@ -240,14 +245,9 @@ public class SingleThreadActivity extends AppCompatActivity {
 
         mContextActivity = getApplicationContext();
 
-
         fragmentCotainer = (FrameLayout) findViewById(R.id.fragment_container);
         imageViewContainer = (RelativeLayout) findViewById(R.id.image_view_container);
         viewPager = (ViewPager) findViewById(R.id.view_pager);
-        left = (FrameLayout) findViewById(R.id.left);
-        left.setOnClickListener(leftListener);
-        right = (FrameLayout) findViewById(R.id.right);
-        right.setOnClickListener(rightListener);
         mThreadsLayoutContainer = (FrameLayout) findViewById(R.id.threads_layout_container);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         mThreadsListView = (ListView) findViewById(R.id.threads_listview);
@@ -255,7 +255,12 @@ public class SingleThreadActivity extends AppCompatActivity {
         tintView = (FrameLayout) findViewById(R.id.tint_view);
         tintView.setOnClickListener(onBackTintClickListener);
         itemContextScrollView = (ScrollView) findViewById(R.id.scroll_item_context);
+        fragmentPostContainer = (FrameLayout) findViewById(R.id.fragment_post_container);
+        tintForMedia = (FrameLayout) findViewById(R.id.tint_for_media);
+        fallingUp = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.falling_up);
+        fallingDown = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.falling_down);
 
+        fragmentPostContainer.setVisibility(View.VISIBLE);
         mLayoutInflater = getLayoutInflater();
 
         ThreadTask threadTask = new ThreadTask();
@@ -275,36 +280,7 @@ public class SingleThreadActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
     }
-
-    private View.OnClickListener leftListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-
-            if (mediaPosition >= 0) {
-                if (mediaPosition != 0) {
-                    mediaPosition--;
-                    addFullMedia(pathsGeneral.get(mediaPosition));
-
-                }
-            }
-        }
-    };
-
-    private View.OnClickListener rightListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-
-            if (mediaPosition < pathsGeneral.size() - 1) {
-                if (mediaPosition != pathsGeneral.size() - 1) {
-                    mediaPosition++;
-                    addFullMedia(pathsGeneral.get(mediaPosition));
-                }
-            }
-        }
-    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -318,8 +294,32 @@ public class SingleThreadActivity extends AppCompatActivity {
         refreshItem.setVisible(false);
         MenuItem actionAttach = menu.findItem(R.id.action_attach);
         actionAttach.setVisible(false);
+        MenuItem actionSend = menu.findItem(R.id.action_send);
+        actionSend.setVisible(false);
 
         return true;
+    }
+
+    public void showPopup(View v) {
+        final String number = String.valueOf(v.getContentDescription());
+        android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+        PopupMenu popup = new PopupMenu(actionBar.getThemedContext(), v);
+        MenuInflater inflater = popup.getMenuInflater();
+        inflater.inflate(R.menu.pop_up_options_menu, popup.getMenu());
+        popup.show();
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                int id = menuItem.getItemId();
+                switch (id) {
+                    case R.id.item_write: {
+                        actionWrite(number);
+                        break;
+                    }
+                }
+                return true;
+            }
+        });
     }
 
     @Override
@@ -327,6 +327,7 @@ public class SingleThreadActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         switch (id) {
+
             case android.R.id.home: {
                 onBackPressed();
                 break;
@@ -343,35 +344,81 @@ public class SingleThreadActivity extends AppCompatActivity {
             case R.id.action_refresh: {
                 beforeCount = numbersGeneral.size() - 1;
                 isRefreshed = true;
+                MenuItem actionRefreshSingle = mMenu.findItem(R.id.action_refresh_single);
+                MenuItem actionRefresh = mMenu.findItem(R.id.action_refresh);
+                actionRefresh.setEnabled(false);
+                actionRefresh.setEnabled(false);
                 ThreadTask tt = new ThreadTask();
                 tt.execute();
                 break;
             }
             case R.id.action_refresh_single: {
+                MenuItem actionRefreshSingle = mMenu.findItem(R.id.action_refresh_single);
+                MenuItem actionRefresh = mMenu.findItem(R.id.action_refresh);
+                actionRefreshSingle.setEnabled(false);
+                actionRefresh.setEnabled(false);
                 refreshThread();
                 break;
             }
             case R.id.action_write: {
-                postingFragmentAvailable = true;
-                MenuItem actionClose = mMenu.findItem(R.id.action_close);
-                MenuItem actionRefreshSingle = mMenu.findItem(R.id.action_refresh_single);
-                MenuItem actionWrite = mMenu.findItem(R.id.action_write);
-                MenuItem actionAttach = mMenu.findItem(R.id.action_attach);
-                actionAttach.setVisible(true);
-                actionRefreshSingle.setVisible(false);
-                actionClose.setVisible(true);
-                actionWrite.setVisible(false);
-                FrameLayout fragmentPostContainer = (FrameLayout) findViewById(R.id.fragment_post_container);
-                fragmentCotainer.setVisibility(View.VISIBLE);
-                fragmentCotainer.setOnClickListener(null);
-                fragmentPostContainer.setVisibility(View.VISIBLE);
-                pf = new PostFragment(getApplicationContext(), this);
-                getFragmentManager().beginTransaction()
-                        .add(R.id.fragment_post_container, pf)
-                        .commit();
+                actionWrite(null);
+                break;
+            }
+            case R.id.action_save: {
+                SaveFileTask sft = new SaveFileTask();
+                sft.execute();
             }
         }
         return true;
+    }
+
+    private void actionWrite(String number) {
+        postingFragmentAvailable = true;
+        imageViewContainer.setVisibility(View.GONE);
+        MenuItem actionClose = mMenu.findItem(R.id.action_close);
+        MenuItem actionRefreshSingle = mMenu.findItem(R.id.action_refresh_single);
+        MenuItem actionWrite = mMenu.findItem(R.id.action_write);
+        MenuItem actionAttach = mMenu.findItem(R.id.action_attach);
+        MenuItem actionSend = mMenu.findItem(R.id.action_send);
+        actionSend.setVisible(true);
+        actionAttach.setVisible(true);
+        actionRefreshSingle.setVisible(false);
+        actionClose.setVisible(false);
+        actionWrite.setVisible(false);
+
+
+        fragmentPostContainer.setAnimation(fallingUp);
+        if (number != null) {
+            pf = new PostFragment(getApplicationContext(), this, number);
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment_post_container, pf)
+                    .commit();
+        } else {
+            pf = new PostFragment(getApplicationContext(), this, null);
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment_post_container, pf)
+                    .commit();
+        }
+        //fragmentPostContainer.setVisibility(View.VISIBLE);
+        fallingUp.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+                fragmentCotainer.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        fragmentPostContainer.startAnimation(fallingUp);
+
+        fragmentCotainer.setOnClickListener(null);
     }
 
     public void refreshThread() {
@@ -382,47 +429,74 @@ public class SingleThreadActivity extends AppCompatActivity {
     }
 
     public void closePostingFragment() {
-        getFragmentManager().beginTransaction()
-                .remove(pf)
-                .commit();
-        MenuItem saveItem = this.mMenu.findItem(R.id.action_save);
-        saveItem.setVisible(false);
-        MenuItem closeItem = this.mMenu.findItem(R.id.action_close);
-        closeItem.setVisible(false);
-        MenuItem refreshItem = this.mMenu.findItem(R.id.action_refresh);
-        refreshItem.setVisible(false);
-        MenuItem actionRefreshSingle = this.mMenu.findItem(R.id.action_refresh_single);
-        actionRefreshSingle.setVisible(true);
-        MenuItem actionWrite = this.mMenu.findItem(R.id.action_write);
-        actionWrite.setVisible(true);
-        MenuItem actionAttach = this.mMenu.findItem(R.id.action_attach);
-        actionAttach.setVisible(false);
-        fragmentCotainer.setVisibility(View.GONE);
-        //fragmentCotainer.setOnClickListener(null);
+
+        fragmentPostContainer.setAnimation(fallingDown);
+        Log.i(LOG_TAG, "Before start animation falling down");
+        fragmentPostContainer.startAnimation(fallingDown);
+        fallingDown.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                getSupportFragmentManager().beginTransaction()
+                        .remove(pf)
+                        .commit();
+                MenuItem saveItem = mMenu.findItem(R.id.action_save);
+                saveItem.setVisible(false);
+                MenuItem closeItem = mMenu.findItem(R.id.action_close);
+                closeItem.setVisible(false);
+                MenuItem refreshItem = mMenu.findItem(R.id.action_refresh);
+                refreshItem.setVisible(false);
+                MenuItem actionRefreshSingle = mMenu.findItem(R.id.action_refresh_single);
+                actionRefreshSingle.setVisible(true);
+                MenuItem actionWrite = mMenu.findItem(R.id.action_write);
+                actionWrite.setVisible(true);
+                MenuItem actionAttach = mMenu.findItem(R.id.action_attach);
+                actionAttach.setVisible(false);
+                MenuItem actionSend = mMenu.findItem(R.id.action_send);
+                actionSend.setVisible(false);
+                fragmentCotainer.setVisibility(View.GONE);
+                imageViewContainer.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+
+
+        ////fragmentCotainer.setOnClickListener(null);
     }
 
     public void onBackPressed() {
         if (postingFragmentAvailable) {
+            Log.i(LOG_TAG, "Inside onBackPressed() postingFragmentAvailable");
             closePostingFragment();
             postingFragmentAvailable = false;
             return;
         }
 
         if (needToCloseContextView) {
+            Log.i(LOG_TAG, "Inside onBackPressed() needToCloseContextView");
             onBackTintListenerBackPressed();
             return;
         }
         if (isErrorContent) {
+            Log.i(LOG_TAG, "Inside onBackPressed() isErrorContent");
             isErrorContent = false;
         }
         if (needToCloseMediaViewer) {
+            Log.i(LOG_TAG, "Inside onBackPressed() needToCloseMediaViewer");
             closeFullMedia();
             needToCloseMediaViewer = false;
             return;
         }
         super.onBackPressed();
     }
-
 
 
     private class ViewHolder {
@@ -434,9 +508,10 @@ public class SingleThreadActivity extends AppCompatActivity {
         ImageView imageContainer2;
         ImageView imageContainer3;
         ImageView imageContainer4;
+        ImageView expandOptionsImageView;
 
         LinearLayout mThreadAnswersContainer;
-
+        //Spinner itemSpinner;
 
     }
 
@@ -448,6 +523,15 @@ public class SingleThreadActivity extends AppCompatActivity {
         public ThreadsAdapter(Context context) {
             mContext = context;
             //threadsList = list;
+            mThreadsListView.setLongClickable(true);
+            mThreadsListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+                @Override
+                public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l) {
+
+                    actionWrite(numbersGeneral.get(i));
+                    return true;
+                }
+            });
         }
 
         @Override
@@ -465,6 +549,7 @@ public class SingleThreadActivity extends AppCompatActivity {
             Map<String, String> item = threadItems.get(i);
             return threadItems.indexOf(item);
         }
+
 
         private View.OnClickListener mediaClickListener = new View.OnClickListener() {
             @Override
@@ -489,13 +574,15 @@ public class SingleThreadActivity extends AppCompatActivity {
         };
 
         @Override
-        public View getView(int i, View view, ViewGroup viewGroup) {
+        public View getView(final int i, View view, ViewGroup viewGroup) {
+
             int layoutMode = -1;
             final ViewHolder viewHolder;
             final Map<String, String> item = getItem(i);
+            final boolean[] firstTimeAnswerItemSpinner = {false};
 
             String date = item.get(Constants.DATE);
-            String number = item.get(Constants.NUMBER_SINGLE_THREAD);
+            final String number = item.get(Constants.NUMBER_SINGLE_THREAD);
             String comment = item.get(Constants.COMMENT);
             String op = item.get(Constants.OP);
             String subjectOfThread = item.get(Constants.SUBJECT_OF_THREAD);
@@ -506,6 +593,8 @@ public class SingleThreadActivity extends AppCompatActivity {
             String duration = item.get(Constants.DURATION);
             String path = item.get(Constants.PATH);
             String email = item.get(Constants.EMAIL);
+
+
 
             String[] splittedPath = null;
             if (path != null) {
@@ -583,6 +672,8 @@ public class SingleThreadActivity extends AppCompatActivity {
 
 
 
+
+
             if (size != null) {
                 String[] splittedSize = size.split(" ");
                 String[] splittedWidth = width.split(" ");
@@ -615,7 +706,7 @@ public class SingleThreadActivity extends AppCompatActivity {
                         if (splittedDuration == null) break;
                         switch (iInfo) {
                             case 0: {
-                                if (splittedDuration.length == 1) break;
+                                //if (splittedDuration.length == 1) break;
                                 if (splittedDuration.length > 0) {
                                     TextView shortInfoTextView = new TextView(mContext);
                                     shortInfoTextView.setTextSize(11);
@@ -771,9 +862,7 @@ public class SingleThreadActivity extends AppCompatActivity {
             } else {
                 subjectOfThread = "<b><font color=\"#002249\">" + subjectOfThread + "</font></b>";
             }
-            //Log.i(LOG_TAG, "opname " +opName);
             if (opName.equals("")) {
-                //Log.i(LOG_TAG, "inside \"\"");
                 opName = defaultOpName;
 
             }
@@ -784,7 +873,7 @@ public class SingleThreadActivity extends AppCompatActivity {
             }
             if (i >= 1) {
                 //Log.i(LOG_TAG, "Inside number post");
-                builderHeader.append("<font color=\"#008000\">#" + i + "</font>" + " ");
+                builderHeader.append("<font color=\"#008000\">#" + (i + 1) + "</font>" + " ");
             }
             builderHeader.append(subjectOfThread + " ");
             builderHeader.append(opName + " ");
@@ -858,9 +947,24 @@ public class SingleThreadActivity extends AppCompatActivity {
             }
 
             itemViews.add(view);
+            view.setContentDescription(number);
+
+            viewHolder.expandOptionsImageView = (ImageView) view.findViewById(R.id.expand_options);
+            viewHolder.expandOptionsImageView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    view.setContentDescription(number);
+                    showPopup(view);
+                }
+            });
+
             return view;
         }
+
+
     }
+
+
 
     private AdapterView.OnItemClickListener onItemClickListener = new AdapterView.OnItemClickListener() {
         @Override
@@ -919,6 +1023,8 @@ public class SingleThreadActivity extends AppCompatActivity {
     public static void onBackTintListenerBackPressed() {
 
         if (openedAnswers.size() == 1) {
+            //mThreadContextItem.removeAllViews();
+            openedAnswers = null;
             mThreadsListView.setEnabled(true);
             mThreadContextItem.removeAllViews();
             tintView.setVisibility(View.GONE);
@@ -937,22 +1043,21 @@ public class SingleThreadActivity extends AppCompatActivity {
     private View.OnClickListener onBackTintClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-//            if (openedAnswers.size() == 1) {
-//                mThreadsListView.setEnabled(true);
-//                mThreadContextItem.removeAllViews();
-//                tintView.setVisibility(View.GONE);
-//                openedAnswers = new ArrayList<>();
-//            } else {
-//                mThreadContextItem.removeAllViews();
-//                View viewBack = openedAnswers.get(openedAnswers.size() - 2);
-//                openedAnswers.remove(openedAnswers.size() - 1);
-//                mThreadContextItem.addView(viewBack);
-//            }
             onBackTintListenerBackPressed();
         }
     };
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.i(LOG_TAG, "Inside onPause()");
+        closeFullMedia();
+    }
+
+
+
     private void closeFullMedia() {
+        //fragmentCotainer.removeViewAt(0);
         fragmentCotainer.setVisibility(View.GONE);
         try {
             adapterI.finalize();
@@ -972,9 +1077,11 @@ public class SingleThreadActivity extends AppCompatActivity {
         refresh.setVisible(false);
         MenuItem actionWrite = mMenu.findItem(R.id.action_write);
         actionWrite.setVisible(true);
+        needToCloseMediaViewer = false;
     }
 
     private void addFullMedia(String path) {
+
         if (path.equals("refresh")) {
             Log.i(LOG_TAG, "Overall paths " + pathsGeneral);
             path = currentPath;
@@ -1018,6 +1125,7 @@ public class SingleThreadActivity extends AppCompatActivity {
                 public void onPageSelected(int position) {
                     Log.i(LOG_TAG, "Page selected " + position);
                     theOnlyPositionToLoad = position;
+                    pageSelected = position;
                     // if (isWebm) {
                     if (playerViews.size() != 0) {
                         if (position > currentPlayerViewPosition) {
@@ -1064,6 +1172,7 @@ public class SingleThreadActivity extends AppCompatActivity {
             });
             viewPager.setAdapter(adapterI);
             viewPager.setCurrentItem(postionG);
+            //fragmentCotainer.removeViewAt(0);
         }
     }
 
@@ -1123,12 +1232,17 @@ public class SingleThreadActivity extends AppCompatActivity {
                         }
                     }
 
+
                     isScrolled = false;
                     mThreadsListView.setClickable(false);
                     mThreadsListView.setFastScrollEnabled(true);
 
                     adapter = new ThreadsAdapter(getApplicationContext());
                     mThreadsListView.setAdapter(adapter);
+                    if (adapterI != null) {
+                        adapterI.notifyDataSetChanged();
+                    }
+
                     if (isRefreshed) {
                         afterCount = copyOfThreadItems.size() - 1;
                         Log.i(LOG_TAG, "afterCont exists " + afterCount);
@@ -1137,6 +1251,10 @@ public class SingleThreadActivity extends AppCompatActivity {
                         //Toast toast = Toast.makeText(getApplicationContext(), String.valueOf(diff), Toast.LENGTH_SHORT);
                         //toast.show();
                         isRefreshed = false;
+                        MenuItem actionRefreshSingle = mMenu.findItem(R.id.action_refresh_single);
+                        MenuItem actionRefresh = mMenu.findItem(R.id.action_refresh);
+                        actionRefreshSingle.setEnabled(true);
+                        actionRefresh.setEnabled(true);
                     }
                     progressBar.setVisibility(View.GONE);
                     mThreadsListView.setOnItemClickListener(onItemClickListener);
@@ -1147,6 +1265,10 @@ public class SingleThreadActivity extends AppCompatActivity {
                     firstTimeLoaded = false;
                     //pathsGeneral = null;
                 } else {
+                    MenuItem actionRefreshSingle = mMenu.findItem(R.id.action_refresh_single);
+                    MenuItem actionRefresh = mMenu.findItem(R.id.action_refresh);
+                    actionRefreshSingle.setEnabled(true);
+                    actionRefresh.setEnabled(true);
                     threadItems = copyOfThreadItems;
                     isScrolled = false;
                     mThreadsListView.setClickable(false);
@@ -1155,9 +1277,6 @@ public class SingleThreadActivity extends AppCompatActivity {
                     if (adapterI != null) {
                         adapterI.notifyDataSetChanged();
                     }
-//                    if (adapterI != null) {
-//                        adapterI.notifyDataSetChanged();
-//                    }
                     if (!imageAdapterIsFinalized) {
                         //addFullMedia("refresh");
                     }
@@ -1236,7 +1355,7 @@ public class SingleThreadActivity extends AppCompatActivity {
                         }
                         Toast toast = Toast.makeText(getApplicationContext(), iToShow, Toast.LENGTH_SHORT);
                         toast.show();
-                        isRefreshed = false;
+                       // isRefreshed = false;
                     }
                     progressBar.setVisibility(View.GONE);
                     mThreadsListView.setOnItemClickListener(onItemClickListener);
@@ -1446,6 +1565,11 @@ public class SingleThreadActivity extends AppCompatActivity {
 
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
+            if (firstTimeImageAdapterInitialized) {
+                pageSelected = position;
+                firstTimeImageAdapterInitialized = false;
+            }
+
                 Log.i(LOG_TAG, "Items " + items.getChildCount());
                 deleteCache(getApplicationContext());
                 webmViewsCounter++;
@@ -1529,6 +1653,50 @@ public class SingleThreadActivity extends AppCompatActivity {
             ((ViewPager) items).removeView((View) object);
         }
     }
+
+   private class SaveFileTask extends AsyncTask<Void, Void, Void> {
+       private final String LOG_TAG = SaveFileTask.class.getSimpleName();
+
+       @Override
+       protected Void doInBackground(Void... voids) {
+           Log.i(LOG_TAG, "Url path " + pathsGeneral.get(pageSelected));
+
+           String path = pathsGeneral.get(pageSelected);
+           String fileName = "";
+           for (int i = path.length() - 1; i >= 0; i--) {
+               if (path.charAt(i) == '/') {
+                   fileName = path.substring(i + 1, path.length());
+                   break;
+               }
+           }
+           Log.i(LOG_TAG, "fileName " + fileName);
+           try {
+               URL url = new URL(pathsGeneral.get(pageSelected));
+               HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+               connection.connect();
+
+               InputStream inputStream = connection.getInputStream();
+               BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+               File save = new File(Constants.DIRECTORY, fileName);
+               FileOutputStream fileOutputStream = new FileOutputStream(save);
+               byte[] buffer = new byte[4 * 1024]; // or other buffer size
+               int read;
+               while ((read = bufferedInputStream.read(buffer)) != -1) {
+                   fileOutputStream.write(buffer, 0, read);
+               }
+               //fileOutputStream.write(bufferedInputStream.read());
+               fileOutputStream.flush();
+               fileOutputStream.close();
+               bufferedInputStream.close();
+
+           } catch (MalformedURLException e) {
+               e.printStackTrace();
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
+           return null;
+       }
+   }
 
     public static void deleteCache(Context context) {
         try {

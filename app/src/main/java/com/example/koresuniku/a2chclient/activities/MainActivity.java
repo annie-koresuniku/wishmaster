@@ -9,6 +9,7 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -36,6 +37,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -101,8 +103,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mMainLinearLayout = (LinearLayout) findViewById(R.id.activity_main);
-
-
         mLoadingTextView = (TextView) findViewById(R.id.boards_loading);
         mMainTextView = (TextView) findViewById(R.id.main_textview);
         mMainTextView.setOnClickListener(new View.OnClickListener() {
@@ -120,9 +120,18 @@ public class MainActivity extends AppCompatActivity {
 //        mScrollView.smoothScrollTo(0, 0);
         mScrollView.setVisibility(View.GONE);
 
-
         setupMainTextView();
         checkDatabaseIfExists();
+
+        createFolderForContent();
+    }
+
+    private void createFolderForContent() {
+        File myDirectory = new File(Environment.getExternalStorageDirectory() + "/Download", "Wishmaster");
+        Constants.DIRECTORY = myDirectory;
+        if(!myDirectory.exists()) {
+            myDirectory.mkdirs();
+        }
     }
 
     @Override

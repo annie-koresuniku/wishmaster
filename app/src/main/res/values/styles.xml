@@ -7,6 +7,10 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="android:colorBackground">@color/background_color_custom</item>
+        <item name="android:popupMenuStyle">@style/PopupMenu</item>
+        <item name="android:textAppearanceLargePopupMenu">@style/myPopupMenuTextAppearanceLarge</item>
+        <item name="android:textAppearanceSmallPopupMenu">@style/myPopupMenuTextAppearanceSmall</item>
+
     </style>
     <style name="autoscroll">
         <item name="android:singleLine">false</item>
@@ -19,4 +23,17 @@
     <style name="textSizeForPageCounter">
         <item name="android:textSize">20sp</item>
     </style>
+    <style name="PopupMenu" parent="@android:style/Widget.Material.Light.PopupMenu.Overflow">
+        <item name="android:popupBackground">@color/background_color_custom</item>
+
+    </style>
+    <style name="myPopupMenuTextAppearanceSmall" parent="@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Small">
+        <item name="android:textColor">@color/text_custom</item>
+    </style>
+    <style name="myPopupMenuTextAppearanceLarge" parent="@style/TextAppearance.AppCompat.Light.Widget.PopupMenu.Large">
+        <item name="android:textColor">@color/text_custom</item>
+    </style>
+
+
+
 </resources>

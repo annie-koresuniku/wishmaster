@@ -12,16 +12,31 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="6dp"
-        android:layout_marginTop="6dp"
         android:layout_marginLeft="12dp"
         android:layout_marginRight="12dp">
 
-        <TextView
-            android:text="TextView"
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/thread_item_header"
-            android:layout_marginBottom="6dp" />
+            android:layout_height="match_parent"
+            android:layout_marginTop="4dp">
+
+            <TextView
+                android:text="TextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/thread_item_header"
+                android:layout_gravity="center"
+                android:textSize="12sp" />
+
+            <ImageView
+                android:layout_height="30dp"
+                app:srcCompat="@drawable/ic_expand_more_black_48dp"
+                android:id="@+id/expand_options"
+                android:layout_marginRight="6dp"
+                android:layout_width="60dp" />
+
+        </LinearLayout>
 
         <ScrollView
             android:layout_width="match_parent"
