@@ -12,4 +12,5 @@
     <color name="text_main_grey_dark">#101010</color>
     <color name="text_custom">#3b3b3b</color>
     <color name="button_back_full">#dddddd</color>
+    <color name="spoiler_span">#b4b4b4</color>
 </resources>

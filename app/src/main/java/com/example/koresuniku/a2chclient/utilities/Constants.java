@@ -1,11 +1,19 @@
 package com.example.koresuniku.a2chclient.utilities;
 
 
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
+
 import com.example.koresuniku.a2chclient.R;
 import com.example.koresuniku.a2chclient.boards_database.BoardsContract;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Constants {
     public static final String MAIN_TEXT_FIRST = "Два.ч - это система форумов, где можно общаться быстро и свободно, где любая точка зрения имеет право на жизнь.\n" +
@@ -50,15 +58,33 @@ public class Constants {
     public static final String SIZE = "size";
     public static final String WIDTH = "width";
     public static final String HEIGHT = "height";
-    public static final String LISTVIEW_POSITION = "listview_position";
     public static final String FULLNAME = "fullname";
     public static final String PATH = "path";
     public static final String DURATION = "duration";
     public static final String FROM_THREAD = "from_thread";
     public static final String EMAIL = "email";
+    public static boolean FROM_SINGLE_THREAD = false;
+
+    public static boolean POSTING_FRAGMENT_IS_OPENED = false;
+    public static String POSTING_EMAIL;
+    public static String POSTING_COMMENT;
+    public static String POSTING_CAPTCHA_ID;
+    public static String POSTING_CAPTCHA_ANSWER;
+    public static boolean POSTING_IS_SAGE = false;
+    public static Drawable POSTING_CAPTCHA_IMAGE;
+    public static String LINK_TO_ANSWER;
+    public static int LISTVIEW_POSITION = 0;
+    public static ArrayList<String> FILES_TO_ATTACH = new ArrayList<>();
 
     public static File DIRECTORY = null;
 
+    public static Map<Integer, Boolean> SPOILER_POSTS_COUNTER;
+    public static Map<Integer, ArrayList<String>> SPOILERS_LOCALIZATIONS = new HashMap<>();
+    public static Map<Integer, ArrayList<String>> SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY = new HashMap<>();
+    public static Map<Integer, ArrayList<String>> LINKS_LOCALIZATIONS = new HashMap<>();
+    public static Map<Integer, ArrayList<String>> LINKS_LOCALIZATIONS_TO_GO = new HashMap<>();
+    public static Map<Integer, Integer> HIDDEN_STATE = new HashMap<>();
+    public static int ANSWER_NUMBER_OPENED = -1;
 
     public static final Integer[] ERROR_IMAGES = {
             R.drawable.error,

@@ -3,6 +3,7 @@ package com.example.koresuniku.a2chclient.activities;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -10,11 +11,20 @@ import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
+import android.text.Layout;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.method.MovementMethod;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -29,7 +39,9 @@ import android.widget.TextView;
 
 import com.example.koresuniku.a2chclient.R;
 import com.example.koresuniku.a2chclient.fragments.PostFragment;
+import com.example.koresuniku.a2chclient.utilities.CommentTagHandler;
 import com.example.koresuniku.a2chclient.utilities.Constants;
+import com.example.koresuniku.a2chclient.utilities.CustomLinkMovementMethod;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -46,6 +58,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.example.koresuniku.a2chclient.utilities.Constants.BOARD;
 import static com.example.koresuniku.a2chclient.utilities.Constants.PAGE;
@@ -53,7 +67,7 @@ import static com.example.koresuniku.a2chclient.utilities.Constants.PAGE;
 public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     private static final String LOG_TAG = ThreadsActivity.class.getSimpleName();
     public static String intentBoard;
-    private String intentPage;
+    public static String intentPage;
     private int chosenPage = 0;
 
     private String boardName;
@@ -77,6 +91,10 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
     private boolean postingFragmentAvailable;
 
     private ArrayList<ArrayList<Map<String, String>>> threadsList = new ArrayList<>();
+    public static ArrayList<String> unformattedComments = new ArrayList<>();
+    public static ArrayList<String> unformattedPageComments = new ArrayList<>();
+    public static Map<Integer, String> formattedTextGeneral;
+    public static ArrayList<String> formattedTextsGeneral = new ArrayList<>();
 
     private ListView mThreadsListView;
     private LayoutInflater mLayoutInflater;
@@ -125,7 +143,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 position = mThreadsListView.getPositionForView(view);
-                Log.i(LOG_TAG, "On click position " + String.valueOf(position));
+                // Log.i(LOG_TAG, "On click position " + String.valueOf(position));
                 ArrayList<Map<String, String>> threadPageClicked = threadsList.get(chosenPage);
                 Map<String, String> itemThreadClicked = threadPageClicked.get(i);
                 String threadNumber = itemThreadClicked.get(Constants.NUMBER);
@@ -133,8 +151,9 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                 Intent intent = new Intent(getApplicationContext(), SingleThreadActivity.class);
                 intent.putExtra(Constants.NUMBER, threadNumber);
                 intent.putExtra(Constants.BOARD, intentBoard);
-                Log.i(LOG_TAG, "Chosen Page " + chosenPage);
+                //Log.i(LOG_TAG, "Chosen Page " + chosenPage);
                 intent.putExtra(Constants.PAGE, String.valueOf(chosenPage));
+                Constants.FROM_SINGLE_THREAD = false;
                 startActivity(intent);
             }
         });
@@ -144,12 +163,31 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         pf = new PostFragment(getApplicationContext());
     }
 
+    @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        Log.i(LOG_TAG, "onResume()");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.i(LOG_TAG, "onPause()");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Constants.SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY = new HashMap<Integer, ArrayList<String>>();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle("");
 
+        Constants.SPOILERS_LOCALIZATIONS = new HashMap<>();
+        formattedTextGeneral = new HashMap<>();
         setContentView(R.layout.threads_layout_container);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         frameLayoutInner = (FrameLayout) findViewById(R.id.threads_layout_containe_inner);
@@ -188,10 +226,12 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                 int pagesOnBoardL = Integer.parseInt(pagesOnBoard);
                 if (chosenPage <= pagesOnBoardL - 3) {
                     chosenPage++;
-                    ThreadsAdapter adapter = new ThreadsAdapter(getApplicationContext(), threadsList.get(chosenPage));
-                    mThreadsListView.setAdapter(adapter);
-                    Log.v(LOG_TAG, "Forward item pressed, go to page " + chosenPage);
-                    mPageIndex.setTitle(String.valueOf(chosenPage));
+                    Log.i(LOG_TAG, "clicked to page " + chosenPage);
+
+                    ThreadsTask tt = new ThreadsTask(getApplicationContext());
+                    tt.execute();
+
+
                 } break;
             }
             case android.R.id.home: {
@@ -289,6 +329,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         swipeRefreshLayout.post(new Runnable() {
             @Override
             public void run() {
+                Constants.SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY = new HashMap<Integer, ArrayList<String>>();
                 swipeRefreshLayout.setRefreshing(true);
                 Intent intent = new Intent(getApplicationContext(), ThreadsActivity.class);
                 intent.putExtra(BOARD, intentBoard);
@@ -310,6 +351,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         public ThreadsAdapter(Context context, ArrayList<Map<String, String>> list) {
             mContext = context;
             threadsList = list;
+            unformattedPageComments = new ArrayList<>();
         }
 
         @Override
@@ -330,7 +372,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
 
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
-            View rootView = mLayoutInflater.inflate(R.layout.thread_item_single_image, viewGroup, false);
+            final View rootView = mLayoutInflater.inflate(R.layout.thread_item_single_image, viewGroup, false);
             viewHolder = new ViewHolder();
 
             Map<String, String> item = getItem(i);
@@ -350,11 +392,14 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
             String path = item.get(Constants.PATH);
             String duration = item.get(Constants.DURATION);
 
+            unformattedPageComments.add(comment);
+
+            rootView.setContentDescription(number);
+
             viewHolder.mThreadItemHeader =
                     (TextView) rootView.findViewById(R.id.thread_item_header);
             viewHolder.mThreadItemImage =
                     (ImageView) rootView.findViewById(R.id.thread_item_image);
-
             viewHolder.mThreadItemBody =
                     (TextView) rootView.findViewById(R.id.thread_item_body);
             viewHolder.mThreadItemAnswersAndFiles =
@@ -396,7 +441,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
             viewHolder.mThreadItemHeader.setText(
                     Html.fromHtml(builderHeader.toString()), TextView.BufferType.SPANNABLE);
             if (!(thumb.equals(""))) {
-                Log.i(LOG_TAG, "Path " + path);
+                //Log.i(LOG_TAG, "Path " + path);
                 if (path.substring(path.length() - 4, path.length()).equals("webm")) {
                     Picasso.with(mContext).load("https://2ch.hk/" + thumb)
                             .into(viewHolder.mThreadItemImage);
@@ -415,15 +460,32 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
             }
             SpannableStringBuilder builderBody = new SpannableStringBuilder();
             builderBody.append(comment);
-            viewHolder.mThreadItemBody.setText(
-                    Html.fromHtml(builderBody.toString()), TextView.BufferType.SPANNABLE);
-            int lines = viewHolder.mThreadItemBody.getLineCount();
-            if (lines >= 6) {
-                builderBody.append(" ...");
-                viewHolder.mThreadItemBody.setText(Html.fromHtml(builderBody.toString()),
-                        TextView.BufferType.SPANNABLE);
-            }
 
+            viewHolder.mThreadItemBody.setMovementMethod(CustomLinkMovementMethod.getInstance(
+                    getApplicationContext(), true, null, null, i, null
+            ));
+            viewHolder.mThreadItemBody.setFocusable(false);
+            //viewHolder.mThreadItemBody.setClickable(false);
+            viewHolder.mThreadItemBody.setLongClickable(false);
+
+            viewHolder.mThreadItemBody.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    position = mThreadsListView.getPositionForView(view);
+
+                    Intent intent = new Intent(getApplicationContext(), SingleThreadActivity.class);
+                    intent.putExtra(Constants.NUMBER, rootView.getContentDescription());
+                    intent.putExtra(Constants.BOARD, intentBoard);
+                    intent.putExtra(Constants.PAGE, String.valueOf(chosenPage));
+                    Constants.FROM_SINGLE_THREAD = false;
+                    startActivity(intent);
+                }
+            });
+
+            //SpannableString ss = new SpannableString(builderBody);
+            //ss = setSpoilerSpans(i, ss);
+            CommentTagHandler commentTagHandler = new CommentTagHandler(i, true, viewHolder.mThreadItemBody);
+            viewHolder.mThreadItemBody.setText(Html.fromHtml(builderBody.toString(), null, commentTagHandler), TextView.BufferType.SPANNABLE);
             int remainderAnswers = Integer.parseInt(
                     answersCount.substring(answersCount.length() - 1, answersCount.length()));
             int remainderFiles = Integer.parseInt(
@@ -557,6 +619,35 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
 
             return rootView;
         }
+
+        private SpannableString setSpoilerSpans(int position, SpannableString ss) {
+            int preCount = 0;
+            for (int i = 0; i < chosenPage; i++) {
+                //Map threadsPage = threadsList.get(i);
+                //Log.i(LOG_TAG, "threadsPAge " + threadsPage.keySet());
+                preCount += threadsList.size();
+            }
+            Log.i(LOG_TAG, "preCount -- " + preCount);
+            ArrayList<String> spoilersArray = Constants.SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY.get(preCount + position);
+            if (spoilersArray != null) {
+                for (String spoiler : spoilersArray) {
+                    String[] locals = spoiler.split(" ");
+                    int start = Integer.parseInt(locals[0]);
+                    int end = Integer.parseInt(locals[1]);
+                    Log.i(LOG_TAG, "BEFORE SETTING SPAN");
+                    Log.i(LOG_TAG, "spoiler as it " + spoiler);
+                    Log.i(LOG_TAG, "ss to span " + ss.toString());
+                    Log.i(LOG_TAG, "ss length " + ss.length());
+                    ss.setSpan(new BackgroundColorSpan(Color.parseColor("#b4b4b4")),
+                            start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    ss.setSpan(new ForegroundColorSpan(Color.parseColor("#00ffffff")),
+                            start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            } else {
+                Log.i(LOG_TAG, "spoilersArray IS NULL");
+            }
+            return ss;
+        }
     }
 
     private class ViewHolder {
@@ -651,8 +742,10 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
             URL url;
             try {
 
-                for(int i = 0; i < Integer.parseInt(pagesOnBoard) - 1; i++) {
+                //for(int i = 0; i < Integer.parseInt(pagesOnBoard) - 1; i++) {
+
                     counter++;
+                counter = chosenPage;
                     if (counter == 0) {
                         url = new URL("https://2ch.hk/" + intentBoard + "/index" + ".json");
                     } else {
@@ -685,7 +778,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                         localItem = formatJSON(rawJSON);
                         threadsList.add(localItem);
                     }
-                }
+                //}
                 return threadsList;
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -700,6 +793,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         @Override
         protected void onPostExecute(ArrayList<ArrayList<Map<String, String>>> maps) {
             Log.v(LOG_TAG, "Inside onPostExecute() " + intentPage);
+            Log.i(LOG_TAG, "SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY " + Constants.SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY);
 
                 if (startAdapter) {
                    // setContentView(R.layout.threads_layout_container);
@@ -709,9 +803,65 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                     progressBar.setVisibility(View.GONE);
                     setTitle(boardName);
                 }
+
+            if (chosenPage != 0) {
+                ThreadsAdapter adapter = new ThreadsAdapter(getApplicationContext(), threadsList.get(chosenPage));
+                mThreadsListView.setAdapter(adapter);
+                Log.v(LOG_TAG, "Forward item pressed, go to page " + chosenPage);
+                mPageIndex.setTitle(String.valueOf(chosenPage));
+            }
             }
         }
 
+    private void getSpoilers(int position) {
+        ArrayList<String> spoilersLocalizations = new ArrayList<>();
+        ArrayList<String> spoilers = new ArrayList<>();
+        Pattern p = Pattern
+                .compile("(<span[^>]+class\\s*=\\s*(\"|')spoiler\\2[^>]*>)[^<]*(</span>)");
+        Matcher m = p.matcher(unformattedComments.get(position));
+        while (m.find()) {
+            String match = m.group();
+            String spoiler = "";
+            for (int i = 0; i < match.length(); i++) {
+                String ch = match.substring(i, i + 1);
+                if (ch.equals(">")) {
+                    i++;
+                    String locals = i + " ";
+                    if (i + 1 >= match.length()) break;
+                    while (!match.substring(i, i + 1).equals("<")) {
+                        spoiler += match.substring(i, i + 1);
+                        i++;
+                    }
+                    locals += i;
+                    spoilers.add(spoiler);
+                    break;
+                }
+            }
+        }
+        if (spoilers.size() > 0) {
+            for (String spoiler : spoilers) {
+                Pattern pattern = Pattern.compile(spoiler.replace(")", "\\)").replace("(", "\\("));
+                Matcher matcher = pattern.matcher(formattedTextGeneral.get(position));
+                int startAt = 0;
+                while (matcher.find(startAt)) {
+                    Log.i(LOG_TAG, "mathced groups" + matcher.groupCount());
+                    int start = matcher.start();
+                    int end = matcher.end();
+                    Log.i(LOG_TAG, "start " + start + ", end " + end);
+                    spoilersLocalizations.add(start + " " + end);
+                    startAt = end;
+                }
+            }
+            if (Constants.SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY.get(position) == null) {
+                Constants.SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY.put(position, spoilersLocalizations);
+            }
+            if (Constants.SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY.get(position).size() == 0) {
+                Constants.SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY.put(position, spoilersLocalizations);
+            }
+        }
+    }
+
+    int counter = 0;
         private ArrayList<Map<String, String>> formatJSON(String rawJSON) {
             ArrayList<Map<String, String>> result = new ArrayList<>();
             Map<String, String> item;
@@ -764,12 +914,21 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                         item.put(Constants.THUMB, thumb);
                         item.put(Constants.SUBJECT_OF_THREAD, subjectOfThread);
                         item.put(Constants.OP_NAME, opName);
-                        //item.put(Constants.DISPLAY_NAME, displayName);
                         item.put(Constants.SIZE, size);
                         item.put(Constants.HEIGHT, height);
                         item.put(Constants.WIDTH, width);
                         item.put(Constants.PATH, path);
                         item.put(Constants.DURATION, duration);
+
+                        unformattedComments.add(comment);
+
+                        SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
+                        spannableStringBuilder.append(comment);
+                        String commentFormatted = String.valueOf(Html.fromHtml(spannableStringBuilder.toString()));
+                        formattedTextGeneral.put(counter, commentFormatted);
+                        formattedTextsGeneral.add(commentFormatted);
+                        getSpoilers(counter);
+                        counter++;
 
                         result.add(item);
                     }

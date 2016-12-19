@@ -109,7 +109,8 @@
                             android:singleLine="false"
                             style="@android:style/Widget.DeviceDefault.Light.TextView"
                             android:textAppearance="@style/TextAppearance.AppCompat"
-                            android:textColor="@color/text_custom" />
+                            android:textColor="@color/text_custom"
+                            android:fontFamily="sans-serif" />
 
                         <Space
                             android:layout_width="match_parent"

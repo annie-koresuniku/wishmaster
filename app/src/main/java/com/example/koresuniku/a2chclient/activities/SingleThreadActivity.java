@@ -1,22 +1,33 @@
 package com.example.koresuniku.a2chclient.activities;
 
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v4.view.WindowCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.NotificationCompat;
 import android.text.Html;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -25,12 +36,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -45,10 +56,15 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.example.koresuniku.a2chclient.R;
 import com.example.koresuniku.a2chclient.fragments.PostFragment;
+import com.example.koresuniku.a2chclient.utilities.CommentTagHandler;
 import com.example.koresuniku.a2chclient.utilities.Constants;
 import com.example.koresuniku.a2chclient.utilities.CustomLinkMovementMethod;
+import com.example.koresuniku.a2chclient.utilities.FetchPath;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
@@ -92,8 +108,12 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.example.koresuniku.a2chclient.utilities.Constants.LINKS_LOCALIZATIONS;
+import static com.example.koresuniku.a2chclient.utilities.Constants.LINKS_LOCALIZATIONS_TO_GO;
+
 public class SingleThreadActivity extends AppCompatActivity {
     private final static String LOG_TAG = SingleThreadActivity.class.getSimpleName();
+    private static final int PICKFILE_RESULT_CODE = 1;
 
     private static Context activityContext;
     private static SingleThreadActivity activity;
@@ -105,7 +125,7 @@ public class SingleThreadActivity extends AppCompatActivity {
 
     public static String intentThreadNumber;
     public static String intentBoard;
-    private static String intentPage;
+    public static String intentPage;
     private static String fromThread;
     private String defaultOpName;
     private String subjectOfThread;
@@ -123,6 +143,7 @@ public class SingleThreadActivity extends AppCompatActivity {
     private String path;
     private String email;
     private String currentPath;
+
     public static int mediaPosition;
     private int beforeCount;
     private int afterCount;
@@ -136,7 +157,7 @@ public class SingleThreadActivity extends AppCompatActivity {
     private boolean firstTimePlayerTurnedOn;
     private static boolean needToCloseContextView;
     private boolean imageAdapterIsFinalized;
-    private static boolean postingFragmentAvailable;
+    public static boolean postingFragmentAvailable;
     private int pageSelected;
     private boolean firstTimeImageAdapterInitialized;
 
@@ -148,8 +169,10 @@ public class SingleThreadActivity extends AppCompatActivity {
     private ArrayList<String> parentsGeneral;
     public static ArrayList<String> numbersGeneral;
     private Map<String, ArrayList<String>> answersGeneral;
-    public static ArrayList<String> formattedTextGeneral;
+    public static Map<Integer, String> formattedTextGeneral;
     public static ArrayList<String> unformattedTextGeneral;
+    public static Map<Integer, SpannableString> spannedTextGeneral;
+    public static ArrayList<String> formattedTextsGeneral = new ArrayList<>();
     public static ArrayList<View> itemViews;
     public static ArrayList<String> pathsGeneral;
     private static ArrayList<String> thumbsGeneral;
@@ -181,25 +204,59 @@ public class SingleThreadActivity extends AppCompatActivity {
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
+        Log.i(LOG_TAG, "onSaveInstanceState");
+        outState.putString(Constants.NUMBER, intentThreadNumber);
+        outState.putString(Constants.BOARD, intentBoard);
+        outState.putString(Constants.PAGE, intentPage);
+        outState.putString(Constants.FROM_THREAD, fromThread);
         super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        Log.i(LOG_TAG, "onRestoreInstanceState");
+        intentThreadNumber = savedInstanceState.getString(Constants.NUMBER);
+        intentBoard = savedInstanceState.getString(Constants.BOARD);
+        intentPage = savedInstanceState.getString(Constants.PAGE);
+        fromThread = savedInstanceState.getString(Constants.FROM_THREAD);
+        super.onRestoreInstanceState(savedInstanceState);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        getSupportActionBar().setShowHideAnimationEnabled(true);
         Log.i(LOG_TAG, "Inside onResume " + mListViewPosition);
         mThreadsListView.setSelection(mListViewPosition);
         mThreadsListView.smoothScrollToPosition(mListViewPosition);
 
+        Log.i(LOG_TAG, "num " + intentThreadNumber);
+        Log.i(LOG_TAG, "brd " + intentBoard);
+        Log.i(LOG_TAG, "pg " + intentPage);
 
+
+        if (Constants.POSTING_FRAGMENT_IS_OPENED) {
+            actionWrite(null);
+        }
+
+        if (intentThreadNumber != null) {
+            if (intentThreadNumber.equals("435999")) {
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(Constants.JILL_STRING, String.valueOf(Constants.JILL_COUNTER++));
+                editor.apply();
+                editor.commit();
+            }
+        }
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        Log.i(LOG_TAG, "onStart()");
         setTitle("");
         setContentView(R.layout.thread_single_layout);
-
+        Constants.FROM_SINGLE_THREAD = true;
         isErrorContent = false;
         firstTimeLoaded = true;
         needToCloseMediaViewer = false;
@@ -212,6 +269,10 @@ public class SingleThreadActivity extends AppCompatActivity {
         pageSelected = 0;
         firstTimeImageAdapterInitialized = true;
 
+        intentThreadNumber = getIntent().getStringExtra(Constants.NUMBER);
+        intentBoard = getIntent().getStringExtra(Constants.BOARD);
+        intentPage = getIntent().getStringExtra(Constants.PAGE);
+        fromThread = getIntent().getStringExtra(Constants.FROM_THREAD);
         //pf = new PostFragment(getApplicationContext(), this, null);
 
         playerViews = new HashMap<>();
@@ -220,23 +281,9 @@ public class SingleThreadActivity extends AppCompatActivity {
         thumbsGeneral = new ArrayList<>();
         answersGeneral = new HashMap<>();
 
-        intentThreadNumber = getIntent().getStringExtra(Constants.NUMBER);
-        intentBoard = getIntent().getStringExtra(Constants.BOARD);
-        intentPage = getIntent().getStringExtra(Constants.PAGE);
-        fromThread = getIntent().getStringExtra(Constants.FROM_THREAD);
-
-        Log.i(LOG_TAG, "num " + intentThreadNumber);
-        Log.i(LOG_TAG, "brd " + intentBoard);
-        Log.i(LOG_TAG, "pg " + intentPage);
         activity = this;
         activityContext = getApplicationContext();
-        if (intentThreadNumber.equals("435999")) {
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putString(Constants.JILL_STRING, String.valueOf(Constants.JILL_COUNTER++));
-            editor.apply();
-            editor.commit();
-        }
+
         itemViews = new ArrayList<>();
         openedAnswers = new ArrayList<>();
 
@@ -267,19 +314,38 @@ public class SingleThreadActivity extends AppCompatActivity {
         threadTask.execute();
 
 
-        if (intentThreadNumber.equals("435999")) {
-            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putString(Constants.JILL_STRING, String.valueOf(Constants.JILL_COUNTER++));
-            editor.apply();
-            editor.commit();
-        }
 
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Constants.POSTING_FRAGMENT_IS_OPENED = false;
+        spannedTextGeneral = new HashMap<>();
+        //Constants.SPOILERS_LOCALIZATIONS = new HashMap<>();
+        Log.i(LOG_TAG, "onCreate()");
+
+        if (savedInstanceState != null) {
+            Log.i(LOG_TAG, "savedInstanceState " + savedInstanceState.toString());
+            intentThreadNumber = savedInstanceState.getString(Constants.NUMBER);
+            intentBoard = savedInstanceState.getString(Constants.BOARD);
+            intentPage = savedInstanceState.getString(Constants.PAGE);
+            fromThread = savedInstanceState.getString(Constants.FROM_THREAD);
+        } else {
+            intentThreadNumber = getIntent().getStringExtra(Constants.NUMBER);
+            intentBoard = getIntent().getStringExtra(Constants.BOARD);
+            intentPage = getIntent().getStringExtra(Constants.PAGE);
+            fromThread = getIntent().getStringExtra(Constants.FROM_THREAD);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.i(LOG_TAG, "ON STOP ");
+        formattedTextsGeneral = new ArrayList<>();
+
     }
 
     @Override
@@ -367,25 +433,32 @@ public class SingleThreadActivity extends AppCompatActivity {
             case R.id.action_save: {
                 SaveFileTask sft = new SaveFileTask();
                 sft.execute();
+                break;
             }
+
         }
         return true;
     }
 
     private void actionWrite(String number) {
         postingFragmentAvailable = true;
+
+        Constants.LINK_TO_ANSWER = number;
+
         imageViewContainer.setVisibility(View.GONE);
         MenuItem actionClose = mMenu.findItem(R.id.action_close);
         MenuItem actionRefreshSingle = mMenu.findItem(R.id.action_refresh_single);
         MenuItem actionWrite = mMenu.findItem(R.id.action_write);
         MenuItem actionAttach = mMenu.findItem(R.id.action_attach);
         MenuItem actionSend = mMenu.findItem(R.id.action_send);
+
         actionSend.setVisible(true);
         actionAttach.setVisible(true);
         actionRefreshSingle.setVisible(false);
         actionClose.setVisible(false);
         actionWrite.setVisible(false);
 
+        Constants.LISTVIEW_POSITION = mThreadsListView.getLastVisiblePosition();
 
         fragmentPostContainer.setAnimation(fallingUp);
         if (number != null) {
@@ -429,6 +502,16 @@ public class SingleThreadActivity extends AppCompatActivity {
     }
 
     public void closePostingFragment() {
+        Constants.FILES_TO_ATTACH = new ArrayList<>();
+        //mThreadsListView.scrollListBy(mThreadsListView.getCount() - 1);
+        Constants.POSTING_FRAGMENT_IS_OPENED = false;
+        Constants.POSTING_EMAIL = null;
+        Constants.POSTING_COMMENT = null;
+        Constants.POSTING_CAPTCHA_ID = null;
+        Constants.POSTING_CAPTCHA_ANSWER = null;
+        Constants.POSTING_IS_SAGE = false;
+        Constants.POSTING_CAPTCHA_IMAGE = null;
+        Constants.LINK_TO_ANSWER = null;
 
         fragmentPostContainer.setAnimation(fallingDown);
         Log.i(LOG_TAG, "Before start animation falling down");
@@ -472,7 +555,30 @@ public class SingleThreadActivity extends AppCompatActivity {
         ////fragmentCotainer.setOnClickListener(null);
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case PICKFILE_RESULT_CODE: {
+                if (resultCode == RESULT_OK) {
+                    String filePath = FetchPath.getPath(getApplicationContext(), data.getData());
+                    Log.i(LOG_TAG, "real filepath " + filePath);
+                    Constants.FILES_TO_ATTACH.add(filePath);
+                }
+            }
+        }
+    }
+
     public void onBackPressed() {
+        Constants.SPOILERS_LOCALIZATIONS = new HashMap<>();
+
+        if (needToCloseMediaViewer) {
+            Log.i(LOG_TAG, "Inside onBackPressed() needToCloseMediaViewer");
+            closeFullMedia();
+            needToCloseMediaViewer = false;
+            return;
+        }
+
         if (postingFragmentAvailable) {
             Log.i(LOG_TAG, "Inside onBackPressed() postingFragmentAvailable");
             closePostingFragment();
@@ -489,15 +595,9 @@ public class SingleThreadActivity extends AppCompatActivity {
             Log.i(LOG_TAG, "Inside onBackPressed() isErrorContent");
             isErrorContent = false;
         }
-        if (needToCloseMediaViewer) {
-            Log.i(LOG_TAG, "Inside onBackPressed() needToCloseMediaViewer");
-            closeFullMedia();
-            needToCloseMediaViewer = false;
-            return;
-        }
+
         super.onBackPressed();
     }
-
 
     private class ViewHolder {
         TextView mThreadItemHeader;
@@ -556,7 +656,7 @@ public class SingleThreadActivity extends AppCompatActivity {
             public void onClick(View view) {
                 String path = String.valueOf(view.getContentDescription());
                 path = "https://2ch.hk/" + path;
-                Log.i(LOG_TAG, "on click path " + path);
+                //Log.i(LOG_TAG, "on click path " + path);
 
                 addFullMedia(path);
                 MenuItem save = mMenu.findItem(R.id.action_save);
@@ -593,7 +693,6 @@ public class SingleThreadActivity extends AppCompatActivity {
             String duration = item.get(Constants.DURATION);
             String path = item.get(Constants.PATH);
             String email = item.get(Constants.EMAIL);
-
 
 
             String[] splittedPath = null;
@@ -670,19 +769,18 @@ public class SingleThreadActivity extends AppCompatActivity {
                 viewHolder.mThreadItemBody =
                         (TextView) view.findViewById(R.id.thread_item_body);
 
-
-
-
-
             if (size != null) {
                 String[] splittedSize = size.split(" ");
                 String[] splittedWidth = width.split(" ");
                 String[] splittedHeight = height.split(" ");
                 String[] splittedDuration = null;
                 if (duration != null) {
+                    //Log.i(LOG_TAG, "duration " + duration);
                     splittedDuration = duration.split(" ");
+                    //Log.i(LOG_TAG, "splittedDurationlngth " + splittedDuration.length);
                 } else {
                     splittedDuration = null;
+                    //Log.i(LOG_TAG, "duration is null");
                 }
 
                 if (layoutMode == 0) {
@@ -690,7 +788,8 @@ public class SingleThreadActivity extends AppCompatActivity {
                     String shortInfo = "(" + splittedSize[0] + "Кб, " + splittedWidth[0] + "x" + splittedHeight[0] + ")";
                     shortInfoTextView.setText(shortInfo);
 
-                    if (duration != null){
+                    //Log.i(LOG_TAG, "duration.equals(\"null \") " + duration.equals("null "));
+                    if (!duration.equals("null ")) {
                         shortInfo = "(" + splittedSize[0] + "Кб, " + splittedWidth[0] + "x" + splittedHeight[0] + ", " + duration.substring(0, duration.length() - 1) + ")";
                         shortInfoTextView.setText(shortInfo);
                         ImageView webmImageview = (ImageView) view.findViewById(R.id.webm_imageview);
@@ -701,31 +800,31 @@ public class SingleThreadActivity extends AppCompatActivity {
                         webmImageview.setVisibility(View.GONE);
                     }
                 } else {
-
                     for (int iInfo = 0; iInfo < splittedSize.length; iInfo++) {
-                        if (splittedDuration == null) break;
+                        //Log.i(LOG_TAG, "ssplittedDuration[iInfo] " + splittedDuration[iInfo]);
                         switch (iInfo) {
                             case 0: {
-                                //if (splittedDuration.length == 1) break;
-                                if (splittedDuration.length > 0) {
-                                    TextView shortInfoTextView = new TextView(mContext);
-                                    shortInfoTextView.setTextSize(11);
-                                    shortInfoTextView.setTextColor(Color.parseColor("#8a000000"));
-                                    String shortInfo = "(" + splittedSize[iInfo] + "Кб, " + splittedWidth[iInfo] + "x" + splittedHeight[iInfo] + ", "
-                                              + splittedDuration[iInfo] + ")";
-                                    shortInfoTextView.setText(shortInfo);
+                                if (!splittedDuration[iInfo].equals("null")) {
+                                    if (splittedDuration.length > iInfo) {
+                                        TextView shortInfoTextView = new TextView(mContext);
+                                        shortInfoTextView.setTextSize(11);
+                                        shortInfoTextView.setTextColor(Color.parseColor("#8a000000"));
+                                        String shortInfo = "(" + splittedSize[iInfo] + "Кб, " + splittedWidth[iInfo] + "x" + splittedHeight[iInfo] + ", "
+                                                + splittedDuration[iInfo] + ")";
+                                        shortInfoTextView.setText(shortInfo);
 
-                                    shortInfoTextView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                                    shortInfoTextView.setMaxWidth(200);
-                                    shortInfoTextView.setGravity(Gravity.CENTER);
+                                        shortInfoTextView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                                        shortInfoTextView.setMaxWidth(200);
+                                        shortInfoTextView.setGravity(Gravity.CENTER);
 
-                                    FrameLayout shInfoCon1 = (FrameLayout) view.findViewById(R.id.sh_info_con_1);
-                                    shInfoCon1.addView(shortInfoTextView);
+                                        FrameLayout shInfoCon1 = (FrameLayout) view.findViewById(R.id.sh_info_con_1);
+                                        shInfoCon1.addView(shortInfoTextView);
 
-                                    ImageView webmImageview = (ImageView) view.findViewById(R.id.webm_imageview_1);
-                                    webmImageview.setVisibility(View.VISIBLE);
-                                    webmImageview.setOnClickListener(mediaClickListener);
-                                    webmImageview.setContentDescription(splittedPath[0]);
+                                        ImageView webmImageview = (ImageView) view.findViewById(R.id.webm_imageview_1);
+                                        webmImageview.setVisibility(View.VISIBLE);
+                                        webmImageview.setOnClickListener(mediaClickListener);
+                                        webmImageview.setContentDescription(splittedPath[0]);
+                                    }
 
                                 } else {
                                     TextView shortInfoTextView = new TextView(mContext);
@@ -745,22 +844,24 @@ public class SingleThreadActivity extends AppCompatActivity {
                                 break;
                             }
                             case 1: {
-                                if (splittedDuration.length > 1) {
-                                    TextView shortInfoTextView = new TextView(mContext);
-                                    shortInfoTextView.setTextSize(11);
-                                    shortInfoTextView.setTextColor(Color.parseColor("#8a000000"));
-                                    String shortInfo = "(" + splittedSize[iInfo] + "Кб, " + splittedWidth[iInfo] + "x" + splittedHeight[iInfo] + ", "
-                                            + splittedDuration[iInfo] + ")";
-                                    shortInfoTextView.setText(shortInfo);
-                                    shortInfoTextView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                                    shortInfoTextView.setMaxWidth(200);
-                                    shortInfoTextView.setGravity(Gravity.CENTER);
-                                    FrameLayout shInfoCon1 = (FrameLayout) view.findViewById(R.id.sh_info_con_2);
-                                    shInfoCon1.addView(shortInfoTextView);
-                                    ImageView webmImageview = (ImageView) view.findViewById(R.id.webm_imageview_2);
-                                    webmImageview.setVisibility(View.VISIBLE);
-                                    webmImageview.setOnClickListener(mediaClickListener);
-                                    webmImageview.setContentDescription(splittedPath[1]);
+                                if (!splittedDuration[iInfo].equals("null")) {
+                                    if (splittedDuration.length > iInfo) {
+                                        TextView shortInfoTextView = new TextView(mContext);
+                                        shortInfoTextView.setTextSize(11);
+                                        shortInfoTextView.setTextColor(Color.parseColor("#8a000000"));
+                                        String shortInfo = "(" + splittedSize[iInfo] + "Кб, " + splittedWidth[iInfo] + "x" + splittedHeight[iInfo] + ", "
+                                                + splittedDuration[iInfo] + ")";
+                                        shortInfoTextView.setText(shortInfo);
+                                        shortInfoTextView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                                        shortInfoTextView.setMaxWidth(200);
+                                        shortInfoTextView.setGravity(Gravity.CENTER);
+                                        FrameLayout shInfoCon1 = (FrameLayout) view.findViewById(R.id.sh_info_con_2);
+                                        shInfoCon1.addView(shortInfoTextView);
+                                        ImageView webmImageview = (ImageView) view.findViewById(R.id.webm_imageview_2);
+                                        webmImageview.setVisibility(View.VISIBLE);
+                                        webmImageview.setOnClickListener(mediaClickListener);
+                                        webmImageview.setContentDescription(splittedPath[1]);
+                                    }
 
                                 } else {
                                     TextView shortInfoTextView = new TextView(mContext);
@@ -778,22 +879,24 @@ public class SingleThreadActivity extends AppCompatActivity {
                                 break;
                             }
                             case 2: {
-                                if (splittedDuration.length > 2) {
-                                    TextView shortInfoTextView = new TextView(mContext);
-                                    shortInfoTextView.setTextSize(11);
-                                    shortInfoTextView.setTextColor(Color.parseColor("#8a000000"));
-                                    String shortInfo = "(" + splittedSize[iInfo] + "Кб, " + splittedWidth[iInfo] + "x" + splittedHeight[iInfo] + ", "
-                                            + splittedDuration[iInfo] + ")";
-                                    shortInfoTextView.setText(shortInfo);
-                                    shortInfoTextView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                                    shortInfoTextView.setMaxWidth(200);
-                                    shortInfoTextView.setGravity(Gravity.CENTER);
-                                    FrameLayout shInfoCon1 = (FrameLayout) view.findViewById(R.id.sh_info_con_3);
-                                    shInfoCon1.addView(shortInfoTextView);
-                                    ImageView webmImageview = (ImageView) view.findViewById(R.id.webm_imageview_3);
-                                    webmImageview.setVisibility(View.VISIBLE);
-                                    webmImageview.setOnClickListener(mediaClickListener);
-                                    webmImageview.setContentDescription(splittedPath[2]);
+                                if (!splittedDuration[iInfo].equals("null")) {
+                                    if (splittedDuration.length > iInfo) {
+                                        TextView shortInfoTextView = new TextView(mContext);
+                                        shortInfoTextView.setTextSize(11);
+                                        shortInfoTextView.setTextColor(Color.parseColor("#8a000000"));
+                                        String shortInfo = "(" + splittedSize[iInfo] + "Кб, " + splittedWidth[iInfo] + "x" + splittedHeight[iInfo] + ", "
+                                                + splittedDuration[iInfo] + ")";
+                                        shortInfoTextView.setText(shortInfo);
+                                        shortInfoTextView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                                        shortInfoTextView.setMaxWidth(200);
+                                        shortInfoTextView.setGravity(Gravity.CENTER);
+                                        FrameLayout shInfoCon1 = (FrameLayout) view.findViewById(R.id.sh_info_con_3);
+                                        shInfoCon1.addView(shortInfoTextView);
+                                        ImageView webmImageview = (ImageView) view.findViewById(R.id.webm_imageview_3);
+                                        webmImageview.setVisibility(View.VISIBLE);
+                                        webmImageview.setOnClickListener(mediaClickListener);
+                                        webmImageview.setContentDescription(splittedPath[2]);
+                                    }
                                 } else {
                                     TextView shortInfoTextView = new TextView(mContext);
                                     shortInfoTextView.setTextSize(11);
@@ -810,22 +913,24 @@ public class SingleThreadActivity extends AppCompatActivity {
                                 break;
                             }
                             case 3: {
-                                if (splittedDuration.length > 4) {
-                                    TextView shortInfoTextView = new TextView(mContext);
-                                    shortInfoTextView.setTextSize(11);
-                                    shortInfoTextView.setTextColor(Color.parseColor("#8a000000"));
-                                    String shortInfo = "(" + splittedSize[iInfo] + "Кб, " + splittedWidth[iInfo] + "x" + splittedHeight[iInfo] + ", "
-                                            + splittedDuration[iInfo] + ")";
-                                    shortInfoTextView.setText(shortInfo);
-                                    shortInfoTextView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-                                    shortInfoTextView.setMaxWidth(200);
-                                    shortInfoTextView.setGravity(Gravity.CENTER);
-                                    FrameLayout shInfoCon1 = (FrameLayout) view.findViewById(R.id.sh_info_con_4);
-                                    shInfoCon1.addView(shortInfoTextView);
-                                    ImageView webmImageview = (ImageView) view.findViewById(R.id.webm_imageview_4);
-                                    webmImageview.setVisibility(View.VISIBLE);
-                                    webmImageview.setOnClickListener(mediaClickListener);
-                                    webmImageview.setContentDescription(splittedPath[3]);
+                                if (!splittedDuration[iInfo].equals("null")) {
+                                    if (splittedDuration.length > iInfo) {
+                                        TextView shortInfoTextView = new TextView(mContext);
+                                        shortInfoTextView.setTextSize(11);
+                                        shortInfoTextView.setTextColor(Color.parseColor("#8a000000"));
+                                        String shortInfo = "(" + splittedSize[iInfo] + "Кб, " + splittedWidth[iInfo] + "x" + splittedHeight[iInfo] + ", "
+                                                + splittedDuration[iInfo] + ")";
+                                        shortInfoTextView.setText(shortInfo);
+                                        shortInfoTextView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                                        shortInfoTextView.setMaxWidth(200);
+                                        shortInfoTextView.setGravity(Gravity.CENTER);
+                                        FrameLayout shInfoCon1 = (FrameLayout) view.findViewById(R.id.sh_info_con_4);
+                                        shInfoCon1.addView(shortInfoTextView);
+                                        ImageView webmImageview = (ImageView) view.findViewById(R.id.webm_imageview_4);
+                                        webmImageview.setVisibility(View.VISIBLE);
+                                        webmImageview.setOnClickListener(mediaClickListener);
+                                        webmImageview.setContentDescription(splittedPath[3]);
+                                    }
                                 } else {
                                     TextView shortInfoTextView = new TextView(mContext);
                                     shortInfoTextView.setTextSize(11);
@@ -837,13 +942,11 @@ public class SingleThreadActivity extends AppCompatActivity {
                                     shortInfoTextView.setGravity(Gravity.CENTER);
                                     FrameLayout shInfoCon1 = (FrameLayout) view.findViewById(R.id.sh_info_con_4);
                                     shInfoCon1.addView(shortInfoTextView);
-
                                 }
                                 break;
                             }
                         }
                     }
-
                     LinearLayout generalImCons = (LinearLayout) view.findViewById(R.id.general_im_cons);
                     generalImCons.setPadding(0, 0, 0, 16);
                 }
@@ -888,9 +991,13 @@ public class SingleThreadActivity extends AppCompatActivity {
             SpannableStringBuilder builderBody = new SpannableStringBuilder();
             builderBody.append(comment);
 
+            spannedTextGeneral.put(i, new SpannableString(builderBody));
+
+
             viewHolder.mThreadItemBody.getLinksClickable();
-            viewHolder.mThreadItemBody.setMovementMethod(
-                    CustomLinkMovementMethod.getInstance(mContext, true, activity, number));
+
+            //getSpoilers(number);
+            //Log.i(LOG_TAG, "SPOILERS_LOCALIZATIONS " + Constants.SPOILERS_LOCALIZATIONS);
 
             if (builderBody.toString().length() == 0) {
                 viewHolder.mThreadItemBody.setVisibility(View.GONE);
@@ -899,10 +1006,15 @@ public class SingleThreadActivity extends AppCompatActivity {
                     spaceAfterComment.setVisibility(View.GONE);
                 }
             } else {
-                viewHolder.mThreadItemBody.setText(
-                        Html.fromHtml(builderBody.toString()), TextView.BufferType.SPANNABLE);
-            }
+                viewHolder.mThreadItemBody.setMovementMethod(
+                        CustomLinkMovementMethod.getInstance(mContext, true, activity, number, i, new SpannableString(builderBody)));
+                SpannableString ss = new SpannableString(formattedTextGeneral.get(i));
+                //ss = setSpoilerSpans(i, ss);
+                viewHolder.mThreadItemBody.setContentDescription(String.valueOf(i));
+                CommentTagHandler commentTagHandler = new CommentTagHandler(i, true, viewHolder.mThreadItemBody);
+                viewHolder.mThreadItemBody.setText(Html.fromHtml(builderBody.toString(), null, commentTagHandler), TextView.BufferType.SPANNABLE);
 
+            }
 
             ArrayList<String> answersArrayList = answersGeneral.get(number);
             String pre = "<i><font color=\"#696969\">"
@@ -930,7 +1042,7 @@ public class SingleThreadActivity extends AppCompatActivity {
             TextView textView = new TextView(mContext);
 
             textView.setMovementMethod(
-                    CustomLinkMovementMethod.getInstance(mContext, false, activity, number));
+                    CustomLinkMovementMethod.getInstance(mContext, false, activity, number, i, null));
             textView.getLinksClickable();
             textView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             textView.setText(Html.fromHtml(builder.toString()), TextView.BufferType.SPANNABLE);
@@ -961,10 +1073,25 @@ public class SingleThreadActivity extends AppCompatActivity {
             return view;
         }
 
-
+        private SpannableString setSpoilerSpans(int position, SpannableString ss) {
+            ArrayList<String> spoilersArray = Constants.SPOILERS_LOCALIZATIONS.get(position);
+            if (spoilersArray != null) {
+                for (String spoiler : spoilersArray) {
+                    String[] locals = spoiler.split(" ");
+                    int start = Integer.parseInt(locals[0]);
+                    int end = Integer.parseInt(locals[1]);
+                    Log.i(LOG_TAG, "BEFORE SETTING SPAN");
+                    ss.setSpan(new BackgroundColorSpan(Color.parseColor("#b4b4b4")),
+                            start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    ss.setSpan(new ForegroundColorSpan(Color.parseColor("#00ffffff")),
+                            start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            } else {
+                Log.i(LOG_TAG, "spoilersArray IS NULL");
+            }
+            return ss;
+        }
     }
-
-
 
     private AdapterView.OnItemClickListener onItemClickListener = new AdapterView.OnItemClickListener() {
         @Override
@@ -978,6 +1105,8 @@ public class SingleThreadActivity extends AppCompatActivity {
     };
 
     public void addAnswerView(String number) {
+
+        Log.i(LOG_TAG, "add answer view()");
         boolean answerExists = false;
         needToCloseContextView = true;
         for (int i = 0; i < numbersGeneral.size(); i++) {
@@ -999,6 +1128,8 @@ public class SingleThreadActivity extends AppCompatActivity {
                     view = mThreadsListView.getAdapter().getView(i, null, null);
                 }
 
+                Log.i(LOG_TAG, "answer number opened " + i);
+                Constants.ANSWER_NUMBER_OPENED = i;
                 mThreadContextItem.removeAllViews();
 
                 tintView.setVisibility(View.VISIBLE);
@@ -1023,6 +1154,7 @@ public class SingleThreadActivity extends AppCompatActivity {
     public static void onBackTintListenerBackPressed() {
 
         if (openedAnswers.size() == 1) {
+            Constants.ANSWER_NUMBER_OPENED = -1;
             //mThreadContextItem.removeAllViews();
             openedAnswers = null;
             mThreadsListView.setEnabled(true);
@@ -1034,6 +1166,7 @@ public class SingleThreadActivity extends AppCompatActivity {
             mThreadContextItem.removeAllViews();
             View viewBack = openedAnswers.get(openedAnswers.size() - 2);
             //if (viewBack != null) {
+            Constants.ANSWER_NUMBER_OPENED--;
                 openedAnswers.remove(openedAnswers.size() - 1);
                 mThreadContextItem.addView(viewBack);
             //}
@@ -1054,11 +1187,16 @@ public class SingleThreadActivity extends AppCompatActivity {
         closeFullMedia();
     }
 
-
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.i(LOG_TAG, "onDestroy()");
+    }
 
     private void closeFullMedia() {
-        //fragmentCotainer.removeViewAt(0);
+        //getSupportActionBar().show();
         fragmentCotainer.setVisibility(View.GONE);
+        if (adapterI == null) return;
         try {
             adapterI.finalize();
         } catch (Throwable throwable) {
@@ -1081,6 +1219,7 @@ public class SingleThreadActivity extends AppCompatActivity {
     }
 
     private void addFullMedia(String path) {
+
 
         if (path.equals("refresh")) {
             Log.i(LOG_TAG, "Overall paths " + pathsGeneral);
@@ -1174,6 +1313,11 @@ public class SingleThreadActivity extends AppCompatActivity {
             viewPager.setCurrentItem(postionG);
             //fragmentCotainer.removeViewAt(0);
         }
+
+
+        //getWindow().requestFeature(WindowCompat.FEATURE_ACTION_BAR_OVERLAY);
+        //getSupportActionBar().hide();
+        //getSupportActionBar().setBackgroundDrawable(getResources().getDrawable(R.drawable.actionbar_bg));
     }
 
     private class ThreadTask extends AsyncTask<Void, Void, Void> {
@@ -1209,9 +1353,92 @@ public class SingleThreadActivity extends AppCompatActivity {
             return null;
         }
 
+        private void getSpoilers(int position) {
+            ArrayList<String> spoilersLocalizations = new ArrayList<>();
+            ArrayList<String> spoilers = new ArrayList<>();
+            Pattern p = Pattern
+                    .compile("(<span[^>]+class\\s*=\\s*(\"|')spoiler\\2[^>]*>)[^<]*(</span>)");
+            Matcher m = p.matcher(unformattedTextGeneral.get(position));
+            while (m.find()) {
+                String match = m.group();
+                String spoiler = "";
+                for (int i = 0; i < match.length(); i++) {
+                    String ch = match.substring(i, i + 1);
+                    if (ch.equals(">")) {
+                        i++;
+                        String locals = i + " ";
+                        if (i + 1 >= match.length()) break;
+                        while (!match.substring(i, i + 1).equals("<")) {
+                            spoiler += match.substring(i, i + 1);
+                            i++;
+                        }
+                        locals += i;
+                        spoilers.add(spoiler);
+                        break;
+                    }
+                }
+            }
+            if (spoilers.size() > 0) {
+                for (String spoiler : spoilers) {
+//                        Pattern pattern = Pattern.compile(spoiler
+//                                .replace(")", "\\)")
+//                                .replace("(", "\\(")
+//                                .replace("+", "\\+")
+//                                .replace("&", "\\&")
+//                                .replace("\\", "")
+//                                .replace("{", "\\{")
+//                                .replace("}", "\\}")
+//                        .replace("))", "\\)\\)")
+//                        .replace("((", "\\(\\(")
+//                        .replace("+15", "\\+\\1\\5"));
+//
+//                        Matcher matcher = pattern.matcher(formattedTextGeneral.get(position));
+//                        int startAt = 0;
+//                        while (matcher.find(startAt)) {
+//                            Log.i(LOG_TAG, "mathced groups" + matcher.groupCount());
+//                            int start = matcher.start();
+//                            int end = matcher.end();
+//                            Log.i(LOG_TAG, "start " + start + ", end " + end);
+//                            spoilersLocalizations.add(start + " " + end);
+//                            startAt = end;
+//                        }
+                    String unformattedComment = unformattedTextGeneral.get(position);
+
+                    if (unformattedComment.length() < 14) continue;
+//                        final String SPAN = "<span>";
+//                        for (int i = 0; i < unformattedComment.length() - 6; i++) {
+//                            String toCheck = unformattedComment.substring(i, i + 6);
+//                            if (toCheck.equals(SPAN)) {
+//                                String inside = "";
+//                                int start = i;
+//                                i++;
+//                                while (!unformattedComment.substring(i, i + 1).equals("<")) {
+//                                    inside += unformattedComment.substring(i, i + 1);
+//                                    i++;
+//                                }
+//                                int end = i;
+//                                Log.i(LOG_TAG, "spoiler found " + spoiler + "start " + start + ", end " + end);
+//                            }
+//                        }
+                    String formattedComment = formattedTextGeneral.get(position);
+                    for (int i = 0; i < formattedComment.length() - spoiler.length(); i++) {
+
+                    }
+                }
+                if (Constants.SPOILERS_LOCALIZATIONS.get(position) == null) {
+                    Constants.SPOILERS_LOCALIZATIONS.put(position, spoilersLocalizations);
+                }
+                if (Constants.SPOILERS_LOCALIZATIONS.get(position).size() == 0) {
+                    Constants.SPOILERS_LOCALIZATIONS.put(position, spoilersLocalizations);
+                }
+            }
+        }
+
             @Override
         protected void onPostExecute(Void aVoid) {
             makeAnswersGeneral();
+                Log.i(LOG_TAG, "FINAL SPOILERS " + Constants.SPOILERS_LOCALIZATIONS);
+
             copyOfThreadItems = threadItems;
             //Log.i(LOG_TAG, "Before for");
             threadItems = new ArrayList<>();
@@ -1231,7 +1458,6 @@ public class SingleThreadActivity extends AppCompatActivity {
                             threadItems.add(copyOfThreadItems.get(i));
                         }
                     }
-
 
                     isScrolled = false;
                     mThreadsListView.setClickable(false);
@@ -1366,7 +1592,6 @@ public class SingleThreadActivity extends AppCompatActivity {
                    // pathsGeneral = null;
                 }
 
-
         }
 
         private AbsListView.OnScrollListener onScrollListener = new AbsListView.OnScrollListener() {
@@ -1406,11 +1631,13 @@ public class SingleThreadActivity extends AppCompatActivity {
                 }
             }
         }
+
+        int counter = 0;
         private ArrayList<Map<String,String>> formatJSON(String rawJSON) {
             ArrayList<Map<String, String>> result = new ArrayList<>();
             parentsGeneral = new ArrayList<>();
             numbersGeneral = new ArrayList<>();
-            formattedTextGeneral = new ArrayList<>();
+            formattedTextGeneral = new HashMap<>();
             unformattedTextGeneral = new ArrayList<>();
             pathsGeneral = new ArrayList<>();
 
@@ -1428,6 +1655,7 @@ public class SingleThreadActivity extends AppCompatActivity {
                     opName = thread.getString("name");
                     parent = thread.getString("parent");
                     email = thread.getString("email");
+
 
                     JSONArray filesArray = thread.getJSONArray("files");
                     if (!(filesArray.length() == 0)) {
@@ -1461,19 +1689,25 @@ public class SingleThreadActivity extends AppCompatActivity {
                                 pathsGeneral.add("https://2ch.hk/" + fileItem.getString("path"));
                                 path = fileItem.getString("path") + " ";
                                 if (path.substring(path.length() - 5, path.length() - 1).equals("webm")) {
-                                    Log.i(LOG_TAG, "webm found");
-                                    duration = fileItem.getString("duration") + " ";
+                                    //Log.i(LOG_TAG, "webm found");
+
+                                    Log.i(LOG_TAG, "duration " + fileItem.get("duration"));
+                                    if (!fileItem.getString("duration").equals("")) {
+                                        duration = fileItem.getString("duration") + " ";
+                                    }
+                                } else {
+                                    duration = "null ";
                                 }
                             } else {
                                 pathsGeneral.add("https://2ch.hk/" + fileItem.getString("path"));
                                 path += fileItem.getString("path") + " ";
                                 if (path.substring(path.length() - 5, path.length() - 1).equals("webm")) {
-                                    Log.i(LOG_TAG, "webm found");
+                                    //Log.i(LOG_TAG, "webm found");
                                     duration += fileItem.getString("duration") + " ";
+                                } else {
+                                    duration += "null ";
                                 }
                             }
-
-
                         }
                     } else {
                         thumbs = null;
@@ -1499,11 +1733,19 @@ public class SingleThreadActivity extends AppCompatActivity {
                     numbersGeneral.add(number);
                     unformattedTextGeneral.add(comment);
 
+
                     SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
                     spannableStringBuilder.append(comment);
                     String commentFormatted = String.valueOf(Html.fromHtml(spannableStringBuilder.toString()));
 
-                    formattedTextGeneral.add(commentFormatted);
+                    //Log.i(LOG_TAG, "comment unformatted " + comment);
+                    formattedTextGeneral.put(counter, commentFormatted);
+                    formattedTextsGeneral.add(commentFormatted);
+
+                    getSpoilers(counter);
+                    //getLinks(counter);
+
+                    counter++;
                     thumbs = null;
                     size = null;
                     width = null;
@@ -1546,7 +1788,7 @@ public class SingleThreadActivity extends AppCompatActivity {
 
         @Override
         protected void finalize() throws Throwable {
-            Log.i(LOG_TAG, "Inside finalize(), items " + items.getChildCount());
+            //Log.i(LOG_TAG, "Inside finalize(), items " + items.getChildCount());
             imageAdapterIsFinalized = true;
             firstTimePlayerTurnedOn = false;
             for (int i = 0; i < items.getChildCount(); i++) {
@@ -1556,6 +1798,7 @@ public class SingleThreadActivity extends AppCompatActivity {
                 if (simpleExoPlayerView != null) {
                     simpleExoPlayerView.getPlayer().stop();
                     simpleExoPlayerView.getPlayer().release();
+                    simpleExoPlayerView.setPlayer(null);
                 }
             }
             items = new ViewPager(getApplicationContext());
@@ -1570,26 +1813,23 @@ public class SingleThreadActivity extends AppCompatActivity {
                 firstTimeImageAdapterInitialized = false;
             }
 
-                Log.i(LOG_TAG, "Items " + items.getChildCount());
+            //Log.i(LOG_TAG, "Items " + items.getChildCount());
                 deleteCache(getApplicationContext());
                 webmViewsCounter++;
                 items = container;
-                Log.i(LOG_TAG, "Inside instantiate " + position);
+            //Log.i(LOG_TAG, "Inside instantiate " + position);
                 LayoutInflater layoutinflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 View v = layoutinflater.inflate(R.layout.context_item_layout, null);
 
                 String path = pathsGeneral.get(position);
                 for (int i = 0; i < pathsGeneral.size(); i++) {
                     if (path.equals(String.valueOf(pathsGeneral.get(i)))) {
-                        Log.i(LOG_TAG, "Got position!");
+                        //Log.i(LOG_TAG, "Got position!");
                         mediaPosition = i;
                     }
                 }
 
                 if (path.substring(path.length() - 4, path.length()).equals("webm")) {
-                    Log.i(LOG_TAG, "Webm found");
-                    Log.i(LOG_TAG, "Current position " + position);
-                    Log.i(LOG_TAG, "Loading ");
                     Handler mainHandler = new Handler();
                     BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
                     TrackSelection.Factory videoTrackSelectionFactory =
@@ -1631,6 +1871,7 @@ public class SingleThreadActivity extends AppCompatActivity {
                     } else {
                         Glide.with(context).load(path).placeholder(R.drawable.load_2).dontAnimate().into(newImage);
                     }
+//
                     isWebm = false;
                     ((ViewPager) items).addView(v, 0);
                 }
@@ -1642,22 +1883,58 @@ public class SingleThreadActivity extends AppCompatActivity {
         @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
            if (isWebm) {
-                Log.i(LOG_TAG, "Inside destroyitem() webm " + position);
+               //Log.i(LOG_TAG, "Inside destroyitem() webm " + position);
 
                SimpleExoPlayerView view = (SimpleExoPlayerView) ((View)object).findViewById(R.id.simpleExoPlayerView);
                if (view.getVisibility() == View.VISIBLE) {
                    view.getPlayer().release();
+                   view.setPlayer(null);
                }
             }
-            Log.i(LOG_TAG, "Inside destroyitem()" + position);
+            //Log.i(LOG_TAG, "Inside destroyitem()" + position);
             ((ViewPager) items).removeView((View) object);
         }
     }
 
-   private class SaveFileTask extends AsyncTask<Void, Void, Void> {
+    private class SaveFileTask extends AsyncTask<Void, Void, Void> {
        private final String LOG_TAG = SaveFileTask.class.getSimpleName();
 
-       @Override
+        private void showNotification() {
+            android.support.v4.app.NotificationCompat.Builder mBuilder =
+                    new NotificationCompat.Builder(getApplicationContext())
+                            .setSmallIcon(R.drawable.notification_icon_small)
+                            .setContentTitle("My notification")
+                            .setContentText("Hello World!");
+// Creates an explicit intent for an Activity in your app
+            Intent resultIntent = new Intent(Intent.ACTION_VIEW);
+
+// The stack builder object will contain an artificial back stack for the
+// started Activity.
+// This ensures that navigating backward from the Activity leads out of
+// your application to the Home screen.
+            TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
+// Adds the back stack for the Intent (but not the Intent itself)
+            // stackBuilder.addParentStack(ResultActivity.class);
+// Adds the Intent that starts the Activity to the top of the stack
+            //stackBuilder.addNextIntent(resultIntent);
+            PendingIntent resultPendingIntent =
+                    stackBuilder.getPendingIntent(
+                            0,
+                            PendingIntent.FLAG_UPDATE_CURRENT
+                    );
+            mBuilder.setContentIntent(resultPendingIntent);
+            NotificationManager mNotificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+// mId allows you to update the notification later on.
+            mNotificationManager.notify(0, mBuilder.build());
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            showNotification();
+        }
+
+        @Override
        protected Void doInBackground(Void... voids) {
            Log.i(LOG_TAG, "Url path " + pathsGeneral.get(pageSelected));
 
@@ -1697,6 +1974,7 @@ public class SingleThreadActivity extends AppCompatActivity {
            return null;
        }
    }
+
 
     public static void deleteCache(Context context) {
         try {

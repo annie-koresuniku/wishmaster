@@ -86,19 +86,13 @@
             </LinearLayout>
 
             <LinearLayout
-                android:orientation="horizontal"
+                android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:id="@+id/files_row"
                 android:layout_marginLeft="12dp"
                 android:layout_marginRight="12dp">
 
-                <TextView
-                    android:text="files_names"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:id="@+id/files_names"
-                    android:layout_weight="1" />
             </LinearLayout>
 
             <LinearLayout
@@ -123,14 +117,28 @@
                         android:orientation="vertical"
                         android:gravity="center">
 
-                        <ImageView
-                            app:srcCompat="@drawable/load_2"
-                            android:id="@+id/captcha_image"
+                        <FrameLayout
                             android:layout_width="match_parent"
-                            android:layout_height="120dp"
-                            android:layout_gravity="center"
-                            android:layout_marginBottom="2dp"
-                            android:layout_weight="1" />
+                            android:layout_height="match_parent"
+                            android:layout_weight="1">
+
+                            <ImageView
+                                app:srcCompat="@drawable/load_2"
+                                android:id="@+id/captcha_image"
+                                android:layout_width="match_parent"
+                                android:layout_height="120dp"
+                                android:layout_gravity="center"
+                                android:layout_marginBottom="2dp"
+                                android:layout_weight="1" />
+
+                            <FrameLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:id="@+id/captcha_timeout_container">
+
+                            </FrameLayout>
+                        </FrameLayout>
 
                         <EditText
                             android:layout_width="match_parent"

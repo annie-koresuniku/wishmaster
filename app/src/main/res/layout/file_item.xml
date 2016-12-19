@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/canva_color_custom"
+        android:padding="6dp"
+        android:layout_marginTop="6dp">
+
+        <TextView
+            android:text="TextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/file_text"
+            android:layout_gravity="left|center" />
+
+        <ImageView
+            app:srcCompat="@drawable/cancel"
+            android:id="@+id/close_image_button"
+            android:layout_gravity="right"
+            android:layout_width="20dp"
+            android:layout_height="20dp" />
+
+    </FrameLayout>
+
+</FrameLayout>
