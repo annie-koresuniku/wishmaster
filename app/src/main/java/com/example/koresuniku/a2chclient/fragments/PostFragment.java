@@ -27,6 +27,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 import com.bumptech.glide.Glide;
@@ -68,7 +69,9 @@ public class PostFragment extends android.support.v4.app.Fragment {
 
     private Context mContext;
     private SingleThreadActivity mActivity;
+    private ThreadsActivity mThreadsActivity;
     private String mAnswer;
+    private boolean createNewThread;
 
     private EditText postEditText;
     private LinearLayout filesLayout;
@@ -89,6 +92,8 @@ public class PostFragment extends android.support.v4.app.Fragment {
     private String image;
     private String captchaAnswer;
 
+    private View mRootView;
+
     public PostFragment(Context context, SingleThreadActivity activity, String answer) {
 
         mContext = context;
@@ -101,47 +106,25 @@ public class PostFragment extends android.support.v4.app.Fragment {
         Constants.POSTING_FRAGMENT_IS_OPENED = true;
     }
 
+    public PostFragment(Context context, boolean newThread, ThreadsActivity threadsActivity) {
+        createNewThread = newThread;
+        mContext = context;
+        mThreadsActivity = threadsActivity;
+    }
+
     @Override
     public void onStart() {
         super.onStart();
         FetchCaptchaImage fci = new FetchCaptchaImage();
         fci.execute();
-    }
 
-
-    @Override
-    public View onCreateView(final LayoutInflater inflater, ViewGroup container, final Bundle savedInstanceState) {
-        Log.i(LOG_TAG, "Inside onCreateView()");
-        final View rootView = inflater.inflate(R.layout.posting, container, false);
-
-        postingPath = "https://2ch.hk/makaba/posting.fcgi";
-
-        filesLayout = (LinearLayout) rootView.findViewById(R.id.files_row);
-        filesLayout.setVisibility(View.GONE);
-        postEditText = (EditText) rootView.findViewById(R.id.edit_post);
-        if (Constants.POSTING_COMMENT != null) {
-            postEditText.setText(Constants.POSTING_COMMENT);
-        }
-        postEditText.setRawInputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE);
-
-        captchaImage = (ImageView) rootView.findViewById(R.id.captcha_image);
-        if (Constants.POSTING_CAPTCHA_IMAGE != null) {
-            captchaImage.setBackground(Constants.POSTING_CAPTCHA_IMAGE);
-        }
-
-        emailEditText = (EditText) rootView.findViewById(R.id.edit_options);
-        if (Constants.POSTING_EMAIL != null) {
-            emailEditText.setText(Constants.POSTING_EMAIL);
-        }
-
-        captchaAnswerEditText = (EditText) rootView.findViewById(R.id.edit_captcha_answer);
-        if (Constants.POSTING_CAPTCHA_ANSWER != null) {
-            captchaAnswerEditText.setText(Constants.POSTING_CAPTCHA_ANSWER);
-        }
-
-        filesContainer = (LinearLayout) rootView.findViewById(R.id.files_row);
+        filesContainer = (LinearLayout) mRootView.findViewById(R.id.files_row);
+        Log.i(LOG_TAG, "filescontainer");
         if (Constants.FILES_TO_ATTACH != null) {
-            filesLayout.setVisibility(View.VISIBLE);
+            //filesLayout.setVisibility(View.VISIBLE);
+            if (filesContainer.getChildCount() > 0) {
+                filesContainer.removeAllViews();
+            }
             ArrayList<String> fileTexts = new ArrayList<>();
 
             for (String path : Constants.FILES_TO_ATTACH) {
@@ -177,15 +160,43 @@ public class PostFragment extends android.support.v4.app.Fragment {
                     }
                 });
                 filesContainer.addView(view);
-//                TextView fileTextView = new TextView(mContext);
-//                fileTextView.setText(textSingle);
-//                fileTextView.setTextAppearance(getActivity(),
-//                        android.R.style.TextAppearance_Material_Small);
-//                fileTextView.setPadding(0, 6, 0, 0);
-//                filesContainer.addView(fileTextView);
             }
-
         }
+    }
+
+
+    @Override
+    public View onCreateView(final LayoutInflater inflater, ViewGroup container, final Bundle savedInstanceState) {
+        Log.i(LOG_TAG, "Inside onCreateView()");
+        final View rootView = inflater.inflate(R.layout.posting, container, false);
+        mRootView = rootView;
+
+        postingPath = "https://2ch.hk/makaba/posting.fcgi";
+
+        //filesLayout = (LinearLayout) rootView.findViewById(R.id.files_row);
+        //filesLayout.setVisibility(View.GONE);
+        postEditText = (EditText) rootView.findViewById(R.id.edit_post);
+        if (Constants.POSTING_COMMENT != null) {
+            postEditText.setText(Constants.POSTING_COMMENT);
+        }
+        postEditText.setRawInputType(InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+
+        captchaImage = (ImageView) rootView.findViewById(R.id.captcha_image);
+        if (Constants.POSTING_CAPTCHA_IMAGE != null) {
+            captchaImage.setBackground(Constants.POSTING_CAPTCHA_IMAGE);
+        }
+
+        emailEditText = (EditText) rootView.findViewById(R.id.edit_options);
+        if (Constants.POSTING_EMAIL != null) {
+            emailEditText.setText(Constants.POSTING_EMAIL);
+        }
+
+        captchaAnswerEditText = (EditText) rootView.findViewById(R.id.edit_captcha_answer);
+        if (Constants.POSTING_CAPTCHA_ANSWER != null) {
+            captchaAnswerEditText.setText(Constants.POSTING_CAPTCHA_ANSWER);
+        }
+
+
 
         captchaImageContainer = (LinearLayout) rootView.findViewById(R.id.captcha_image_container);
         if (mActivity == null) {
@@ -221,6 +232,8 @@ public class PostFragment extends android.support.v4.app.Fragment {
             @Override
             public void onClick(View view) {
                 captchaImage.setImageResource(0);
+
+                timeoutContainer.setVisibility(View.GONE);
                 FetchCaptchaImage fci = new FetchCaptchaImage();
                 fci.execute();
                 ctt[0].cancel(true);
@@ -246,6 +259,7 @@ public class PostFragment extends android.support.v4.app.Fragment {
         actionSend.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem menuItem) {
+
                 sendPostToServer();
                 return true;
             }
@@ -331,14 +345,7 @@ public class PostFragment extends android.support.v4.app.Fragment {
                         public void onTick(long l) {}
                         @Override
                         public void onFinish() {
-
-                        TextView timeoutTextView = new TextView(mContext);
-                        timeoutTextView.setText("Капча протухла!");
-                            timeoutTextView.setTextSize(20.0f);
-                        timeoutTextView.setTextColor(Color.RED);
-                        timeoutTextView.setGravity(Gravity.LEFT);
-                            //captchaImageContainer.addView(timeoutTextView);
-                            timeoutContainer.addView(timeoutTextView);
+                            timeoutContainer.setVisibility(View.VISIBLE);
                             onStop();
                         }
                     }.start();
@@ -467,11 +474,21 @@ public class PostFragment extends android.support.v4.app.Fragment {
                             reqEntity.addPart("video", new FileBody(video));
                         } else {
                             ByteArrayOutputStream bos = new ByteArrayOutputStream();
-
-                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(
-                                    getActivity().getContentResolver(), Uri.fromFile(new File(path)));
-                            bitmap.compress(Bitmap.CompressFormat.JPEG, 75, bos);
-                            reqEntity.addPart("image", new ByteArrayBody(bos.toByteArray(), "image"));
+                            Log.i(LOG_TAG, "type " + type);
+                            if (type.equals("png")) {
+                                Bitmap bitmap = MediaStore.Images.Media.getBitmap(
+                                        getActivity().getContentResolver(), Uri.fromFile(new File(path)));
+                                bitmap.compress(Bitmap.CompressFormat.PNG, 75, bos);
+                                reqEntity.addPart("image", new ByteArrayBody(bos.toByteArray(), "image"));
+                            } else if (type.equals("jpeg") || type.equals("jpg")) {
+                                Bitmap bitmap = MediaStore.Images.Media.getBitmap(
+                                        getActivity().getContentResolver(), Uri.fromFile(new File(path)));
+                                bitmap.compress(Bitmap.CompressFormat.JPEG, 75, bos);
+                                reqEntity.addPart("image", new ByteArrayBody(bos.toByteArray(), "image"));
+                            } else {
+                                Toast t = Toast.makeText(getActivity(), "Непостабельный формат", Toast.LENGTH_SHORT);
+                                t.show();
+                            }
                         }
                     }
                 }
@@ -489,6 +506,7 @@ public class PostFragment extends android.support.v4.app.Fragment {
 
                 Log.i(LOG_TAG, "New response " + s.toString());
 
+                if (mActivity != null) {
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -498,7 +516,23 @@ public class PostFragment extends android.support.v4.app.Fragment {
 
                         }
                     });
-                //  }
+                }
+
+                if (createNewThread) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mThreadsActivity.closePostingFragment();
+                            //mThreadsActivity.runNewThreadTask();
+                            Intent intent = new Intent(mThreadsActivity, ThreadsActivity.class);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+                            intent.putExtra(Constants.BOARD, mThreadsActivity.intentBoard);
+                            intent.putExtra(Constants.PAGE, "0");
+                            startActivity(intent);
+                        }
+                    });
+                }
+
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             } catch (ProtocolException e) {

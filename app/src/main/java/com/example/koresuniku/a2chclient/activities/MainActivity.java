@@ -21,12 +21,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.CursorAdapter;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.koresuniku.a2chclient.R;
+import com.example.koresuniku.a2chclient.boards_database.DataBaseHelper;
 import com.example.koresuniku.a2chclient.fragments.ExpandedListViewFragment;
 import com.example.koresuniku.a2chclient.utilities.Constants;
 import com.example.koresuniku.a2chclient.boards_database.BoardsContract;
@@ -36,10 +38,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -65,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout mMainLinearLayout;
 
     private String mBText;
+
     public static String[] projection = {
             BoardsContract.BoardsEntry._ID,
             BoardsContract.BoardsEntry.COLUMN_SUBJECT,
@@ -84,8 +93,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        int jill = Integer.parseInt(sharedPreferences.getString(Constants.JILL_STRING, String.valueOf(Constants.JILL_COUNTER)));
+        SharedPreferences sharedPreferences =
+                PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        int jill = Integer.parseInt(sharedPreferences.getString(
+                Constants.JILL_STRING, String.valueOf(Constants.JILL_COUNTER)));
         Log.i(LOG_TAG, "int jill " + jill);
         if (jill >= 1) {
             int orientation = getResources().getConfiguration().orientation;
@@ -102,6 +113,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        createFolderForContent();
+
         mMainLinearLayout = (LinearLayout) findViewById(R.id.activity_main);
         mLoadingTextView = (TextView) findViewById(R.id.boards_loading);
         mMainTextView = (TextView) findViewById(R.id.main_textview);
@@ -116,14 +129,15 @@ public class MainActivity extends AppCompatActivity {
         });
         mBoardsHelper = new BoardsHelper(getApplicationContext());
         mScrollView = (ScrollView) findViewById(R.id.scrolview_main);
-//        mScrollView.fullScroll(ScrollView.FOCUS_UP);
-//        mScrollView.smoothScrollTo(0, 0);
         mScrollView.setVisibility(View.GONE);
 
         setupMainTextView();
-        checkDatabaseIfExists();
+        try {
+            checkDatabaseIfExists();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        createFolderForContent();
     }
 
     private void createFolderForContent() {
@@ -202,25 +216,61 @@ public class MainActivity extends AppCompatActivity {
         //mMainTextView.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
-    private void checkDatabaseIfExists() {
+    private void checkDatabaseIfExists() throws IOException {
         Log.v(LOG_TAG, "Inside checkDatabaseIfExists()");
 
-        mBoardsDatabaseReadable = mBoardsHelper.getReadableDatabase();
-        mBoardsDatabaseWritable = mBoardsHelper.getWritableDatabase();
+        DataBaseHelper dbManager = new DataBaseHelper(this);
+        Log.v(LOG_TAG, "Database is there with version: " + dbManager.getReadableDatabase().getVersion());
 
-        Cursor cursor = mBoardsDatabaseReadable.query(
-                BoardsContract.BoardsEntry.TABLE_NAME,
-                projection, null, null, null, null, null
-        );
+        SQLiteDatabase db = dbManager.getReadableDatabase();
+        Log.i(LOG_TAG, "db is not null " + (db != null));
 
-        Log.v(LOG_TAG, String.valueOf(cursor.getCount()));
-        if (cursor.getCount() == 0) {
-            WriteToBoardsDatabaseTask writeToBoardsDatabaseTask =
-                    new WriteToBoardsDatabaseTask(getApplicationContext());
-            writeToBoardsDatabaseTask.execute();
-        } else {
-            initializeBoards();
+        Log.i(LOG_TAG, db.getPath());
+        copyDataBase();
+//        Cursor cursorD = db.query(
+//                BoardsContract.BoardsEntry.TABLE_NAME,
+//                projection, null, null, null, null, null
+//        );
+        Cursor cursorD = db.rawQuery("SELECT * FROM boards;", null);
+        Log.v(LOG_TAG, "Query Result:" + cursorD.getCount());
+        cursorD.close();
+        db.close();
+        dbManager.close();
+        initializeBoards();
+
+//        mBoardsDatabaseReadable = mBoardsHelper.getReadableDatabase();
+//        mBoardsDatabaseWritable = mBoardsHelper.getWritableDatabase();
+
+//        Cursor cursor = mBoardsDatabaseReadable.query(
+//                BoardsContract.BoardsEntry.TABLE_NAME,
+//                projection, null, null, null, null, null
+//        );
+//
+//        Log.v(LOG_TAG, String.valueOf(cursor.getCount()));
+//        if (cursor.getCount() == 0) {
+//            WriteToBoardsDatabaseTask writeToBoardsDatabaseTask =
+//                    new WriteToBoardsDatabaseTask(getApplicationContext());
+//            writeToBoardsDatabaseTask.execute();
+//        } else {
+//            initializeBoards();
+//        }
+    }
+
+    private void copyDataBase() throws IOException {
+        final String DATABASE_PATH = "/data/data/com.example.koresuniku.a2chclient/databases/";
+        final String DATABASE_NAME = "database.db";
+        String outFileName = DATABASE_PATH + DATABASE_NAME;
+        OutputStream myOutput = new FileOutputStream(outFileName);
+        InputStream myInput = getApplicationContext().getAssets().open(DATABASE_NAME);
+
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = myInput.read(buffer)) > 0) {
+            myOutput.write(buffer, 0, length);
         }
+        myInput.close();
+        myOutput.flush();
+        myOutput.close();
     }
 
     private void initializeBoards() {
@@ -236,7 +286,18 @@ public class MainActivity extends AppCompatActivity {
         List<String> techBoardsL = new ArrayList<>();
         List<String> japaneseBoardsL = new ArrayList<>();
 
-        Cursor cursor = mBoardsDatabaseReadable.query(
+//        Cursor cursor = mBoardsDatabaseReadable.query(
+//                BoardsContract.BoardsEntry.TABLE_NAME,
+//                projection, null, null, null, null, null
+//        );
+        DataBaseHelper dbManager = new DataBaseHelper(this);
+        Log.v(LOG_TAG, "Database is there with version: " + dbManager.getReadableDatabase().getVersion());
+
+        SQLiteDatabase dbase = dbManager.getReadableDatabase();
+        Log.i(LOG_TAG, "db is not null " + (dbase != null));
+
+        Log.i(LOG_TAG, dbase.getPath());
+        Cursor cursor = dbase.query(
                 BoardsContract.BoardsEntry.TABLE_NAME,
                 projection, null, null, null, null, null
         );
@@ -292,13 +353,29 @@ public class MainActivity extends AppCompatActivity {
         techBoards = formatList(techBoardsL);
         japaneseBoards = formatList(japaneseBoardsL);
 
-        Log.v(LOG_TAG, String.valueOf(japaneseBoards.length));
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //createAdapterForExpandedListView();
-
         getFragmentManager().beginTransaction()
                 .add(R.id.fragment_container, new ExpandedListViewFragment())
                 .commit();
+
+//        File db = new File("/data/data/com.example.koresuniku.a2chclient/databases/boards.db");
+//        Log.i(LOG_TAG, "db exists " + (db != null));
+//        File save = new File(Constants.DIRECTORY, "database");
+//        try {
+//            FileInputStream fis = new FileInputStream(db);
+//            FileOutputStream fos = new FileOutputStream(save);
+//            byte[] buffer = new byte[4 * 1024]; // or other buffer size
+//            int read;
+//            while ((read = fis.read(buffer)) != -1) {
+//                fos.write(buffer, 0, read);
+//            }
+//            fos.flush();
+//            fos.close();
+//            fis.close();
+//        } catch (FileNotFoundException e1) {
+//            e1.printStackTrace();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     private String[] formatList(List<String> list) {
@@ -394,6 +471,8 @@ public class MainActivity extends AppCompatActivity {
             localIds = null;
             localDescs = null;
             initializeBoards();
+
+
             //checkDatabase();
         }
 

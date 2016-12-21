@@ -6,10 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -18,8 +15,6 @@ import android.preference.PreferenceManager;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v4.view.WindowCompat;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.NotificationCompat;
 import android.text.Html;
@@ -36,9 +31,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.webkit.MimeTypeMap;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
@@ -56,15 +51,13 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
 import com.example.koresuniku.a2chclient.R;
 import com.example.koresuniku.a2chclient.fragments.PostFragment;
 import com.example.koresuniku.a2chclient.utilities.CommentTagHandler;
 import com.example.koresuniku.a2chclient.utilities.Constants;
 import com.example.koresuniku.a2chclient.utilities.CustomLinkMovementMethod;
 import com.example.koresuniku.a2chclient.utilities.FetchPath;
+import com.example.koresuniku.a2chclient.utilities.TouchImageView;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.LoadControl;
@@ -77,7 +70,7 @@ import com.google.android.exoplayer2.trackselection.AdaptiveVideoTrackSelection;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
+import com.example.koresuniku.a2chclient.utilities.SimpleExoPlayerView;
 import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
@@ -107,9 +100,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.example.koresuniku.a2chclient.utilities.Constants.LINKS_LOCALIZATIONS;
-import static com.example.koresuniku.a2chclient.utilities.Constants.LINKS_LOCALIZATIONS_TO_GO;
 
 public class SingleThreadActivity extends AppCompatActivity {
     private final static String LOG_TAG = SingleThreadActivity.class.getSimpleName();
@@ -345,6 +335,7 @@ public class SingleThreadActivity extends AppCompatActivity {
         super.onStop();
         Log.i(LOG_TAG, "ON STOP ");
         formattedTextsGeneral = new ArrayList<>();
+        //Constants.POSTING_FRAGMENT_IS_OPENED = false;
 
     }
 
@@ -596,6 +587,7 @@ public class SingleThreadActivity extends AppCompatActivity {
             isErrorContent = false;
         }
 
+        Constants.FILES_TO_ATTACH = new ArrayList<>();
         super.onBackPressed();
     }
 
@@ -667,7 +659,7 @@ public class SingleThreadActivity extends AppCompatActivity {
 
                 actionWrite.setVisible(false);
                 refreShSingle.setVisible(false);
-                refresh.setVisible(true);
+                refresh.setVisible(false);
                 save.setVisible(true);
                 close.setVisible(true);
             }
@@ -1195,6 +1187,7 @@ public class SingleThreadActivity extends AppCompatActivity {
 
     private void closeFullMedia() {
         //getSupportActionBar().show();
+        firstTimePlayerTurnedOn = true;
         fragmentCotainer.setVisibility(View.GONE);
         if (adapterI == null) return;
         try {
@@ -1219,8 +1212,6 @@ public class SingleThreadActivity extends AppCompatActivity {
     }
 
     private void addFullMedia(String path) {
-
-
         if (path.equals("refresh")) {
             Log.i(LOG_TAG, "Overall paths " + pathsGeneral);
             path = currentPath;
@@ -1272,7 +1263,11 @@ public class SingleThreadActivity extends AppCompatActivity {
                             if (v != null) {
                                 Log.i(LOG_TAG, "Inside disabling");
                                 SimpleExoPlayerView player = (SimpleExoPlayerView) v.findViewById(R.id.simpleExoPlayerView);
-                                player.getPlayer().setPlayWhenReady(false);
+                                if (player != null) {
+                                    if (player.getPlayer() != null) {
+                                        player.getPlayer().setPlayWhenReady(false);
+                                    }
+                                }
                             }
                             View vCurrent = (View) playerViews.get(position);
                             if (vCurrent != null) {
@@ -1288,36 +1283,34 @@ public class SingleThreadActivity extends AppCompatActivity {
                             if (v != null) {
                                 Log.i(LOG_TAG, "Inside disabling");
                                 SimpleExoPlayerView player = (SimpleExoPlayerView) v.findViewById(R.id.simpleExoPlayerView);
-                                player.getPlayer().setPlayWhenReady(false);
+                                if (player.getPlayer() != null) {
+                                    player.getPlayer().setPlayWhenReady(false);
+                                }
                             }
                             View vCurrent = (View) playerViews.get(position);
                             if (vCurrent != null) {
                                 Log.i(LOG_TAG, "Inside enabling");
                                 SimpleExoPlayerView player = (SimpleExoPlayerView) vCurrent.findViewById(R.id.simpleExoPlayerView);
-                                player.getPlayer().setPlayWhenReady(true);
+                                if (player != null) {
+                                    if (player.getPlayer() != null) {
+                                        player.getPlayer().setPlayWhenReady(false);
+                                    }
+                                }
                             }
                             currentPlayerViewPosition = position;
                         }
                     }
                     currentPlayerViewPosition = position;
-                    //   }
-
                 }
 
                 @Override
                 public void onPageScrollStateChanged(int state) {
-
                 }
             });
             viewPager.setAdapter(adapterI);
             viewPager.setCurrentItem(postionG);
-            //fragmentCotainer.removeViewAt(0);
+            ;
         }
-
-
-        //getWindow().requestFeature(WindowCompat.FEATURE_ACTION_BAR_OVERLAY);
-        //getSupportActionBar().hide();
-        //getSupportActionBar().setBackgroundDrawable(getResources().getDrawable(R.drawable.actionbar_bg));
     }
 
     private class ThreadTask extends AsyncTask<Void, Void, Void> {
@@ -1354,7 +1347,8 @@ public class SingleThreadActivity extends AppCompatActivity {
         }
 
         private void getSpoilers(int position) {
-            ArrayList<String> spoilersLocalizations = new ArrayList<>();
+            //Log.i(LOG_TAG, "getSpoilers(), " + position);
+            ArrayList<String> spoilersLocations = new ArrayList<>();
             ArrayList<String> spoilers = new ArrayList<>();
             Pattern p = Pattern
                     .compile("(<span[^>]+class\\s*=\\s*(\"|')spoiler\\2[^>]*>)[^<]*(</span>)");
@@ -1378,7 +1372,12 @@ public class SingleThreadActivity extends AppCompatActivity {
                     }
                 }
             }
+            //Log.i(LOG_TAG, "spoilers " + spoilers);
             if (spoilers.size() > 0) {
+
+                String commentFormatted = formattedTextGeneral.get(position);
+
+                int start = 0;
                 for (String spoiler : spoilers) {
 //                        Pattern pattern = Pattern.compile(spoiler
 //                                .replace(")", "\\)")
@@ -1402,34 +1401,27 @@ public class SingleThreadActivity extends AppCompatActivity {
 //                            spoilersLocalizations.add(start + " " + end);
 //                            startAt = end;
 //                        }
-                    String unformattedComment = unformattedTextGeneral.get(position);
-
-                    if (unformattedComment.length() < 14) continue;
-//                        final String SPAN = "<span>";
-//                        for (int i = 0; i < unformattedComment.length() - 6; i++) {
-//                            String toCheck = unformattedComment.substring(i, i + 6);
-//                            if (toCheck.equals(SPAN)) {
-//                                String inside = "";
-//                                int start = i;
-//                                i++;
-//                                while (!unformattedComment.substring(i, i + 1).equals("<")) {
-//                                    inside += unformattedComment.substring(i, i + 1);
-//                                    i++;
-//                                }
-//                                int end = i;
-//                                Log.i(LOG_TAG, "spoiler found " + spoiler + "start " + start + ", end " + end);
-//                            }
-//                        }
-                    String formattedComment = formattedTextGeneral.get(position);
-                    for (int i = 0; i < formattedComment.length() - spoiler.length(); i++) {
-
+                    int loopCounter = 0;
+                    for (int i = start; i < commentFormatted.length() - spoiler.length() + 1; i++) {
+                        //Log.i(LOG_TAG, "search spoiler " + commentFormatted.substring(i, i + spoiler.length()));
+                        //Log.i(LOG_TAG, "loopCounter " + loopCounter);
+                        loopCounter++;
+                        //Log.i(LOG_TAG, "spoiler length " + spoiler.length() + ", search length " + commentFormatted.substring(i, i + spoiler.length()).length());
+                        if (commentFormatted.substring(i, i + spoiler.length()).equals(spoiler)) {
+                            //Log.i(LOG_TAG, "got spoiler " + commentFormatted.substring(i, i + spoiler.length()));
+                            int end = i + spoiler.length();
+                            //Log.i(LOG_TAG, "end " + end);
+                            spoilersLocations.add(i + " " + end);
+                            start = i + spoiler.length();
+                            break;
+                        }
                     }
                 }
                 if (Constants.SPOILERS_LOCALIZATIONS.get(position) == null) {
-                    Constants.SPOILERS_LOCALIZATIONS.put(position, spoilersLocalizations);
+                    Constants.SPOILERS_LOCALIZATIONS.put(position, spoilersLocations);
                 }
                 if (Constants.SPOILERS_LOCALIZATIONS.get(position).size() == 0) {
-                    Constants.SPOILERS_LOCALIZATIONS.put(position, spoilersLocalizations);
+                    Constants.SPOILERS_LOCALIZATIONS.put(position, spoilersLocations);
                 }
             }
         }
@@ -1491,6 +1483,7 @@ public class SingleThreadActivity extends AppCompatActivity {
                     firstTimeLoaded = false;
                     //pathsGeneral = null;
                 } else {
+
                     MenuItem actionRefreshSingle = mMenu.findItem(R.id.action_refresh_single);
                     MenuItem actionRefresh = mMenu.findItem(R.id.action_refresh);
                     actionRefreshSingle.setEnabled(true);
@@ -1501,6 +1494,7 @@ public class SingleThreadActivity extends AppCompatActivity {
                     mThreadsListView.setFastScrollEnabled(true);
                     adapter.notifyDataSetChanged();
                     if (adapterI != null) {
+                        Log.i(LOG_TAG, "adapterI.notifyDataSetChanged()");
                         adapterI.notifyDataSetChanged();
                     }
                     if (!imageAdapterIsFinalized) {
@@ -1691,7 +1685,7 @@ public class SingleThreadActivity extends AppCompatActivity {
                                 if (path.substring(path.length() - 5, path.length() - 1).equals("webm")) {
                                     //Log.i(LOG_TAG, "webm found");
 
-                                    Log.i(LOG_TAG, "duration " + fileItem.get("duration"));
+                                    // Log.i(LOG_TAG, "duration " + fileItem.get("duration"));
                                     if (!fileItem.getString("duration").equals("")) {
                                         duration = fileItem.getString("duration") + " ";
                                     }
@@ -1788,9 +1782,9 @@ public class SingleThreadActivity extends AppCompatActivity {
 
         @Override
         protected void finalize() throws Throwable {
-            //Log.i(LOG_TAG, "Inside finalize(), items " + items.getChildCount());
             imageAdapterIsFinalized = true;
             firstTimePlayerTurnedOn = false;
+            currentPlayerViewPosition = -1;
             for (int i = 0; i < items.getChildCount(); i++) {
                 View v = items.getChildAt(i);
                 SimpleExoPlayerView simpleExoPlayerView = (SimpleExoPlayerView) v.findViewById(R.id.simpleExoPlayerView);
@@ -1813,7 +1807,6 @@ public class SingleThreadActivity extends AppCompatActivity {
                 firstTimeImageAdapterInitialized = false;
             }
 
-            //Log.i(LOG_TAG, "Items " + items.getChildCount());
                 deleteCache(getApplicationContext());
                 webmViewsCounter++;
                 items = container;
@@ -1845,7 +1838,8 @@ public class SingleThreadActivity extends AppCompatActivity {
                     TouchImageView newImage = (TouchImageView) v.findViewById(R.id.imageViews);
                     newImage.setVisibility(View.GONE);
                     DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(context,
-                            Util.getUserAgent(context, "yourApplicationName"), (TransferListener<? super DataSource>) bandwidthMeter);
+                            Util.getUserAgent(context, "yourApplicationName"),
+                            (TransferListener<? super DataSource>) bandwidthMeter);
                     ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
                     MediaSource videoSource = new ExtractorMediaSource(Uri.parse(path),
                             dataSourceFactory, extractorsFactory, null, null);
@@ -1853,12 +1847,15 @@ public class SingleThreadActivity extends AppCompatActivity {
                     player.prepare(videoSource);
                     player.seekTo(0);
                     if (!firstTimePlayerTurnedOn) {
+                        Log.i(LOG_TAG, "setting player true");
                         player.setPlayWhenReady(true);
                         firstTimePlayerTurnedOn = true;
                     } else {
+                        Log.i(LOG_TAG, "setting player false");
                         player.setPlayWhenReady(false);
                     }
                     isWebm = true;
+                    // player.setPlayWhenReady(false);
                     ((ViewPager) items).addView(v, 0);
 
                     playerViews.put(position, v);
@@ -1869,7 +1866,7 @@ public class SingleThreadActivity extends AppCompatActivity {
                         Log.i(LOG_TAG, "Path " + path.substring(path.length() - 3, path.length()));
                         Glide.with(context).load(path).asGif().placeholder(R.drawable.load_2).diskCacheStrategy(DiskCacheStrategy.SOURCE).error(R.drawable.error11).into(newImage);
                     } else {
-                        Glide.with(context).load(path).placeholder(R.drawable.load_2).dontAnimate().into(newImage);
+                        Picasso.with(context).load(path).placeholder(R.drawable.load_2).into(newImage);
                     }
 //
                     isWebm = false;
@@ -1883,40 +1880,39 @@ public class SingleThreadActivity extends AppCompatActivity {
         @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
            if (isWebm) {
-               //Log.i(LOG_TAG, "Inside destroyitem() webm " + position);
-
                SimpleExoPlayerView view = (SimpleExoPlayerView) ((View)object).findViewById(R.id.simpleExoPlayerView);
                if (view.getVisibility() == View.VISIBLE) {
-                   view.getPlayer().release();
-                   view.setPlayer(null);
+                   if (view.getPlayer() != null) {
+                       view.getPlayer().release();
+                       view.setPlayer(null);
+                   }
                }
             }
-            //Log.i(LOG_TAG, "Inside destroyitem()" + position);
             ((ViewPager) items).removeView((View) object);
         }
     }
 
-    private class SaveFileTask extends AsyncTask<Void, Void, Void> {
+    private class SaveFileTask extends AsyncTask<Void, Void, String> {
        private final String LOG_TAG = SaveFileTask.class.getSimpleName();
 
-        private void showNotification() {
+        private void showNotification(String fileName) {
             android.support.v4.app.NotificationCompat.Builder mBuilder =
                     new NotificationCompat.Builder(getApplicationContext())
                             .setSmallIcon(R.drawable.notification_icon_small)
-                            .setContentTitle("My notification")
-                            .setContentText("Hello World!");
-// Creates an explicit intent for an Activity in your app
-            Intent resultIntent = new Intent(Intent.ACTION_VIEW);
-
-// The stack builder object will contain an artificial back stack for the
-// started Activity.
-// This ensures that navigating backward from the Activity leads out of
-// your application to the Home screen.
+                            .setContentTitle("Схоронено")
+                            .setContentText(fileName);
+            File file = new File(Constants.DIRECTORY, fileName);
+            String type = null;
+            String extension = MimeTypeMap.getFileExtensionFromUrl(String.valueOf(Uri.fromFile(file)));
+            if (extension != null) {
+                type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+            }
+            Intent intent = new Intent();
+            intent.setAction(android.content.Intent.ACTION_VIEW);
+            intent.setDataAndType(Uri.fromFile(file), type);
             TaskStackBuilder stackBuilder = TaskStackBuilder.create(getApplicationContext());
-// Adds the back stack for the Intent (but not the Intent itself)
-            // stackBuilder.addParentStack(ResultActivity.class);
-// Adds the Intent that starts the Activity to the top of the stack
-            //stackBuilder.addNextIntent(resultIntent);
+
+            stackBuilder.addNextIntent(intent);
             PendingIntent resultPendingIntent =
                     stackBuilder.getPendingIntent(
                             0,
@@ -1925,17 +1921,19 @@ public class SingleThreadActivity extends AppCompatActivity {
             mBuilder.setContentIntent(resultPendingIntent);
             NotificationManager mNotificationManager =
                     (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-// mId allows you to update the notification later on.
-            mNotificationManager.notify(0, mBuilder.build());
+
+            mNotificationManager.notify(Constants.NOTIFICATIONS_COUNTER, mBuilder.build());
+
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            showNotification();
+        protected void onPostExecute(String fileName) {
+            Constants.NOTIFICATIONS_COUNTER++;
+            showNotification(fileName);
         }
 
         @Override
-       protected Void doInBackground(Void... voids) {
+        protected String doInBackground(Void... voids) {
            Log.i(LOG_TAG, "Url path " + pathsGeneral.get(pageSelected));
 
            String path = pathsGeneral.get(pageSelected);
@@ -1966,6 +1964,7 @@ public class SingleThreadActivity extends AppCompatActivity {
                fileOutputStream.close();
                bufferedInputStream.close();
 
+               return fileName;
            } catch (MalformedURLException e) {
                e.printStackTrace();
            } catch (IOException e) {
@@ -1974,7 +1973,6 @@ public class SingleThreadActivity extends AppCompatActivity {
            return null;
        }
    }
-
 
     public static void deleteCache(Context context) {
         try {

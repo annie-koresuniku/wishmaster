@@ -33,6 +33,7 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -42,6 +43,7 @@ import com.example.koresuniku.a2chclient.fragments.PostFragment;
 import com.example.koresuniku.a2chclient.utilities.CommentTagHandler;
 import com.example.koresuniku.a2chclient.utilities.Constants;
 import com.example.koresuniku.a2chclient.utilities.CustomLinkMovementMethod;
+import com.example.koresuniku.a2chclient.utilities.FetchPath;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -66,6 +68,8 @@ import static com.example.koresuniku.a2chclient.utilities.Constants.PAGE;
 
 public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     private static final String LOG_TAG = ThreadsActivity.class.getSimpleName();
+    private static final int PICKFILE_RESULT_CODE = 1;
+
     public static String intentBoard;
     public static String intentPage;
     private int chosenPage = 0;
@@ -124,6 +128,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         super.onSaveInstanceState(outState);
         outState.putString(Constants.BOARD, intentBoard);
         outState.putString(Constants.PAGE, String.valueOf(chosenPage));
+        outState.putBoolean("pfAvailable", postingFragmentAvailable);
     }
 
     @Override
@@ -133,7 +138,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         intentBoard = getIntent().getStringExtra(BOARD);
         intentPage = getIntent().getStringExtra(PAGE);
 
-        postingFragmentAvailable = false;
+        //postingFragmentAvailable = false;
 
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh);
         swipeRefreshLayout.setOnRefreshListener(this);
@@ -144,6 +149,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 position = mThreadsListView.getPositionForView(view);
                 // Log.i(LOG_TAG, "On click position " + String.valueOf(position));
+                Constants.FILES_TO_ATTACH = new ArrayList<String>();
                 ArrayList<Map<String, String>> threadPageClicked = threadsList.get(chosenPage);
                 Map<String, String> itemThreadClicked = threadPageClicked.get(i);
                 String threadNumber = itemThreadClicked.get(Constants.NUMBER);
@@ -158,9 +164,11 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
             }
         });
         postingFragmentContainer = (FrameLayout) findViewById(R.id.posting_fragment_container);
+        // postingFragmentContainer.setVisibility(View.VISIBLE);
+
         fallingUp = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.falling_up);
         fallingDown = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.falling_down);
-        pf = new PostFragment(getApplicationContext());
+        pf = new PostFragment(getApplicationContext(), true, this);
     }
 
     @Override
@@ -186,6 +194,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         super.onCreate(savedInstanceState);
         setTitle("");
 
+        postingFragmentAvailable = Constants.POSTING_FRAGMENT_IS_OPENED;
         Constants.SPOILERS_LOCALIZATIONS = new HashMap<>();
         formattedTextGeneral = new HashMap<>();
         setContentView(R.layout.threads_layout_container);
@@ -248,7 +257,8 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
     }
 
     private void actionWrite() {
-        postingFragmentAvailable = true;
+        postingFragmentContainer.setVisibility(View.VISIBLE);
+        Constants.POSTING_FRAGMENT_IS_OPENED = true;
         MenuItem actionSend = mMenu.findItem(R.id.action_send);
         actionSend.setVisible(true);
         MenuItem actionWrite = mMenu.findItem(R.id.action_write);
@@ -259,12 +269,16 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         pageIndex.setVisible(false);
         MenuItem forwardItem = mMenu.findItem(R.id.forward_item);
         forwardItem.setVisible(false);
+        MenuItem actionAttach = mMenu.findItem(R.id.action_attach);
+        actionAttach.setVisible(true);
         Log.i(LOG_TAG, "postingFragmentContainre " + (postingFragmentContainer != null));
         postingFragmentContainer.setAnimation(fallingUp);
+        //postingFragmentContainer.setId(View.VISIBLE);
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.posting_fragment_container, pf)
                 .commit();
         postingFragmentContainer.startAnimation(fallingUp);
+        //postingFragmentContainer.setVisibility(View.VISIBLE);
         Log.i(LOG_TAG, "Post animation");
     }
 
@@ -294,7 +308,9 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                 pageIndex.setVisible(true);
                 MenuItem forwardItem = mMenu.findItem(R.id.forward_item);
                 forwardItem.setVisible(true);
-                //fragmentCotainer.setVisibility(View.GONE);
+                MenuItem actionAttach = mMenu.findItem(R.id.action_attach);
+                actionAttach.setVisible(false);
+                postingFragmentContainer.setVisibility(View.INVISIBLE);
             }
 
             @Override
@@ -306,9 +322,16 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        //Constants.POSTING_FRAGMENT_IS_OPENED = false;
+    }
+
+    @Override
     public void onBackPressed() {
-        if (postingFragmentAvailable) {
+        if (Constants.POSTING_FRAGMENT_IS_OPENED) {
             closePostingFragment();
+            Constants.POSTING_FRAGMENT_IS_OPENED = false;
             postingFragmentAvailable = false;
             return;
         }
@@ -453,8 +476,8 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                             .into(viewHolder.mThreadItemImage);
                 }
             } else {
-                FrameLayout imageContainer =
-                        (FrameLayout) rootView.findViewById(R.id.image_item_container);
+                LinearLayout imageContainer =
+                        (LinearLayout) rootView.findViewById(R.id.image_item_container);
                 imageContainer.setVisibility(View.GONE);
 
             }
@@ -725,7 +748,23 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         }
     }
 
-    private class ThreadsTask extends AsyncTask<Void, Void, ArrayList<ArrayList<Map<String, String>>>> {
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Constants.POSTING_FRAGMENT_IS_OPENED = true;
+        Log.i(LOG_TAG, "omActivityResult");
+        switch (requestCode) {
+            case PICKFILE_RESULT_CODE: {
+                if (resultCode == RESULT_OK) {
+                    String filePath = FetchPath.getPath(getApplicationContext(), data.getData());
+                    Log.i(LOG_TAG, "real filepath " + filePath);
+                    Constants.FILES_TO_ATTACH.add(filePath);
+                }
+            }
+        }
+    }
+
+    public class ThreadsTask extends AsyncTask<Void, Void, ArrayList<ArrayList<Map<String, String>>>> {
         private final String LOG_TAG = ThreadsTask.class.getSimpleName();
         private Context mContext;
         private boolean startAdapter = true;
@@ -844,7 +883,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                 Matcher matcher = pattern.matcher(formattedTextGeneral.get(position));
                 int startAt = 0;
                 while (matcher.find(startAt)) {
-                    Log.i(LOG_TAG, "mathced groups" + matcher.groupCount());
+                    Log.i(LOG_TAG, "matched groups" + matcher.groupCount());
                     int start = matcher.start();
                     int end = matcher.end();
                     Log.i(LOG_TAG, "start " + start + ", end " + end);

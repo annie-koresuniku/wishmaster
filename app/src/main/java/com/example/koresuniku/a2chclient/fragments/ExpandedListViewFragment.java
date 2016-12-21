@@ -3,8 +3,10 @@ package com.example.koresuniku.a2chclient.fragments;
 import android.app.Fragment;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,6 +21,7 @@ import android.widget.TextView;
 import com.example.koresuniku.a2chclient.R;
 import com.example.koresuniku.a2chclient.activities.MainActivity;
 import com.example.koresuniku.a2chclient.activities.ThreadsActivity;
+import com.example.koresuniku.a2chclient.boards_database.DataBaseHelper;
 import com.example.koresuniku.a2chclient.utilities.Constants;
 import com.example.koresuniku.a2chclient.boards_database.BoardsContract;
 
@@ -26,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static android.content.Context.LOCATION_SERVICE;
 import static com.example.koresuniku.a2chclient.activities.MainActivity.adultBoards;
 import static com.example.koresuniku.a2chclient.activities.MainActivity.creativityBoards;
 import static com.example.koresuniku.a2chclient.activities.MainActivity.differentBoards;
@@ -52,8 +56,6 @@ public class ExpandedListViewFragment extends Fragment {
 
     }
 
-
-
     int totalChilds = 0;
     private void createAdapterForExpandedListView() {
         ArrayList<Map<String, String>> groupData;
@@ -69,6 +71,7 @@ public class ExpandedListViewFragment extends Fragment {
             groupData.add(map);
         }
 
+        Log.i("LOG_TAG", "AdultBoards " + adultBoards);
         //Log.v(LOG_TAG, groupData.toString());
         String groupFrom[] = new String[] { "groupName" };
         int groupTo[] = new int[] { android.R.id.text1 };
@@ -169,10 +172,16 @@ public class ExpandedListViewFragment extends Fragment {
         MainActivity.mScrollView.fullScroll(ScrollView.FOCUS_UP);
         MainActivity.mScrollView.smoothScrollTo(0, 0);
 //        MainActivity.mScrollView.scrollTo(mScrollView.getTop(), mScrollView.getTop());
-        setListViewHeightBasedOnChildren(mExpandableListView, 0);
+
+        if (isTablet()) {
+            Log.i("exp", "isTablet");
+            setListViewHeightBasedOnChildren(mExpandableListView, 1);
+        } else {
+            Log.i("exp", "isPhone");
+            setListViewHeightBasedOnChildren(mExpandableListView, 0);
+        }
         MainActivity.mScrollView.setVisibility(View.VISIBLE);
         //Log.v(LOG_TAG, String.valueOf(adapter.getGroupCount()));
-
 
         mExpandableListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
             @Override
@@ -221,7 +230,11 @@ public class ExpandedListViewFragment extends Fragment {
                         break;
                 }
                 totalChilds += childs;
-                setListViewHeightBasedOnChildren(mExpandableListView, totalChilds);
+                if (isTablet()) {
+                    setListViewHeightBasedOnChildren(mExpandableListView, totalChilds, true);
+                } else {
+                    setListViewHeightBasedOnChildren(mExpandableListView, totalChilds);
+                }
                 Log.v("OnExpand", String.valueOf(totalChilds));
 
             }
@@ -261,7 +274,11 @@ public class ExpandedListViewFragment extends Fragment {
                         break;
                 }
                 totalChilds = totalChilds - childs;
-                setListViewHeightBasedOnChildren(mExpandableListView, totalChilds);
+                if (isTablet()) {
+                    setListViewHeightBasedOnChildren(mExpandableListView, totalChilds + 1);
+                } else {
+                    setListViewHeightBasedOnChildren(mExpandableListView, totalChilds);
+                }
                 Log.v("OnCollapse", String.valueOf(totalChilds));
             }
         });
@@ -272,7 +289,24 @@ public class ExpandedListViewFragment extends Fragment {
                 TextView descriptionTextView = (TextView) view.findViewById(R.id.board_item);
                 String description = descriptionTextView.getText().toString();
 
-                Cursor cursor = mBoardsDatabaseReadable.query(
+//                Cursor cursor = mBoardsDatabaseReadable.query(
+//                        BoardsContract.BoardsEntry.TABLE_NAME,
+//                        projection, BoardsContract.BoardsEntry.COLUMN_DESC + " =? ",
+//                        new String[] { description }, null, null, null
+//                );
+                DataBaseHelper dbManager = new DataBaseHelper(getActivity());
+                //Log.v(LOG_TAG,"Database is there with version: "+dbManager.getReadableDatabase().getVersion());
+
+                SQLiteDatabase db = dbManager.getReadableDatabase();
+                //Log.i(LOG_TAG, "db is not null " + (db != null));
+
+                //Log.i(LOG_TAG, db.getPath());
+                //copyDataBase();
+//        Cursor cursorD = db.query(
+//                BoardsContract.BoardsEntry.TABLE_NAME,
+//                projection, null, null, null, null, null
+//        );
+                Cursor cursor = db.query(
                         BoardsContract.BoardsEntry.TABLE_NAME,
                         projection, BoardsContract.BoardsEntry.COLUMN_DESC + " =? ",
                         new String[] { description }, null, null, null
@@ -284,6 +318,9 @@ public class ExpandedListViewFragment extends Fragment {
                 int index = cursor.getColumnIndex(BoardsContract.BoardsEntry.COLUMN_ID);
                 String id = cursor.getString(index);
                 cursor.close();
+                ///cursor.close();
+                db.close();
+                dbManager.close();
 
                 Intent intent = new Intent(getActivity(), ThreadsActivity.class);
                 intent.putExtra(Constants.BOARD, id);
@@ -294,6 +331,20 @@ public class ExpandedListViewFragment extends Fragment {
             }
         });
 
+    }
+
+    private boolean isTablet() {
+        DisplayMetrics metrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
+
+        float yInches = metrics.heightPixels / metrics.ydpi;
+        float xInches = metrics.widthPixels / metrics.xdpi;
+        double diagonalInches = Math.sqrt(xInches * xInches + yInches * yInches);
+        if (diagonalInches >= 6.5) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public static void setListViewHeightBasedOnChildren(ListView listView, int childs) {
@@ -309,10 +360,35 @@ public class ExpandedListViewFragment extends Fragment {
             totalHeight += listItem.getMeasuredHeight();
         }
 
+        Log.i("expanded list view ", "ex init");
+
         ViewGroup.LayoutParams params = listView.getLayoutParams();
         params.height = totalHeight * 3 + (listView.getDividerHeight() * (listAdapter.getCount() - 1)) - 9;
 
         params.height -= childs * 9;
+        listView.setLayoutParams(params);
+        listView.requestLayout();
+    }
+
+    public static void setListViewHeightBasedOnChildren(ListView listView, int childs, boolean b) {
+        ListAdapter listAdapter = listView.getAdapter();
+        if (listAdapter == null) {
+            return;
+        }
+
+        int totalHeight = 0;
+        for (int i = 0; i < listAdapter.getCount(); i++) {
+            View listItem = listAdapter.getView(i, null, listView);
+            listItem.measure(0, 0);
+            totalHeight += listItem.getMeasuredHeight();
+        }
+
+        Log.i("expanded list view ", "ex init");
+
+        ViewGroup.LayoutParams params = listView.getLayoutParams();
+        params.height = totalHeight * 3 + (listView.getDividerHeight() * (listAdapter.getCount() - 1)) - 18;
+
+        params.height -= childs * 6;
         listView.setLayoutParams(params);
         listView.requestLayout();
     }

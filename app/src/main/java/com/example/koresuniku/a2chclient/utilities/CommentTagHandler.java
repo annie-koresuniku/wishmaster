@@ -47,19 +47,19 @@ public class CommentTagHandler implements Html.TagHandler {
             //Log.i(LOG_TAG, "received text " + editable);
 
             mPosition = SingleThreadActivity.formattedTextsGeneral.indexOf(editable.toString());
-            Log.i(LOG_TAG, "received position " + mPosition);
+            //Log.i(LOG_TAG, "received position " + mPosition);
 
             ArrayList<String> spoilers = Constants.SPOILERS_LOCALIZATIONS.get(mPosition);
 
             if (spoilers == null) return;
-            Log.i(LOG_TAG, "BEFORE SETTING SPAN 1");
+            //Log.i(LOG_TAG, "BEFORE SETTING SPAN 1");
 
             for (String spoiler : spoilers) {
                 String[] bAndE = spoiler.split(" ");
                 int start = Integer.parseInt(bAndE[0]);
                 int end = Integer.parseInt(bAndE[1]);
                 if (editable.length() <= start || editable.length() <= end) continue;
-                Log.i(LOG_TAG, "BEFORE SETTING SPAN 2");
+                //Log.i(LOG_TAG, "BEFORE SETTING SPAN 2");
                 editable.setSpan(new BackgroundColorSpan(Color.parseColor("#b4b4b4")),
                         start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 editable.setSpan(new ForegroundColorSpan(Color.parseColor("#00ffffff")),
@@ -73,14 +73,14 @@ public class CommentTagHandler implements Html.TagHandler {
             ArrayList<String> spoilers = Constants.SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY.get(mPosition);
 
             if (spoilers == null) return;
-            Log.i(LOG_TAG, "BEFORE SETTING SPAN 1");
+            //Log.i(LOG_TAG, "BEFORE SETTING SPAN 1");
 
             for (String spoiler : spoilers) {
                 String[] bAndE = spoiler.split(" ");
                 int start = Integer.parseInt(bAndE[0]);
                 int end = Integer.parseInt(bAndE[1]);
                 // if (editable.length() <= start || editable.length() <= end) continue;
-                Log.i(LOG_TAG, "BEFORE SETTING SPAN 2");
+                //Log.i(LOG_TAG, "BEFORE SETTING SPAN 2");
                 editable.setSpan(new BackgroundColorSpan(Color.parseColor("#b4b4b4")),
                         start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 editable.setSpan(new ForegroundColorSpan(Color.parseColor("#00ffffff")),

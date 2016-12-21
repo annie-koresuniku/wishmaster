@@ -14,6 +14,12 @@
         app:showAsAction="always"
         android:id="@+id/forward_item" />
     <item android:title="Item"
+        android:id="@+id/action_attach"
+        android:icon="@drawable/ic_attach_file_white_48dp"
+        app:showAsAction="always"
+        android:visible="false" />
+    <item
+        android:title="Item"
         android:id="@+id/action_send"
         android:icon="@drawable/ic_send_white_48dp"
         app:showAsAction="always" />

@@ -41,7 +41,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/posting_fragment_container"
-        android:layout_gravity="bottom">
+        android:layout_gravity="bottom"
+        android:visibility="visible">
 
     </FrameLayout>
 

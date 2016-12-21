@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
     <LinearLayout
@@ -47,8 +48,8 @@
                         app:srcCompat="@drawable/webm2_fixed"
                         android:id="@+id/webm_imageview"
                         android:layout_height="30dp"
-                        android:layout_gravity="center"
-                        android:layout_width="80dp" />
+                        android:layout_width="50dp"
+                        android:layout_gravity="center" />
                 </FrameLayout>
 
                 <TextView
@@ -62,27 +63,27 @@
             </LinearLayout>
 
             <FrameLayout
-                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:id="@+id/body_text_item_container">
+                android:id="@+id/body_text_item_container"
+                android:layout_width="match_parent">
 
                 <LinearLayout
                     android:orientation="vertical"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginLeft="12dp"
                     android:layout_marginRight="6dp">
 
                     <TextView
                         android:text="comment"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
+                        android:layout_height="wrap_content"
                         android:id="@+id/thread_item_body"
                         android:singleLine="false"
                         style="@android:style/Widget.DeviceDefault.Light.TextView"
                         android:textAppearance="@style/TextAppearance.AppCompat"
                         android:textColor="@color/text_custom"
-                        android:lines="8" />
+                        android:maxLines="12" />
 
                     <Space
                         android:layout_width="match_parent"

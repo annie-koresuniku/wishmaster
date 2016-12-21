@@ -1,4 +1,4 @@
-package com.google.android.exoplayer2.ui;
+package com.example.koresuniku.a2chclient.utilities;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -19,6 +19,10 @@ import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.text.Cue;
 import com.google.android.exoplayer2.text.TextRenderer;
+import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
+import com.google.android.exoplayer2.ui.PlaybackControlView;
+import com.google.android.exoplayer2.ui.SubtitleView;
+
 import java.util.List;
 
 /**

@@ -10,7 +10,7 @@
  * Extends Android ImageView to include pinch zooming, panning, fling and double tap zoom.
  */
 
-package com.example.koresuniku.a2chclient.activities;
+package com.example.koresuniku.a2chclient.utilities;
 
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -993,10 +993,10 @@ public class TouchImageView extends ImageView {
 			translateImageToCenterTouchPosition(t);
 			fixScaleTrans();
 			setImageMatrix(matrix);
-			
-			//
-			// OnTouchImageViewListener is set: double tap runnable updates listener
-			// with every frame.
+            //////////////////////////////////////////////////////////////////////////////////////////////////////
+            //
+            // OnTouchImageViewListener is set: double tap runnable updates listener
+            // with every frame.
 			//
 			if (touchImageViewListener != null) {
 				touchImageViewListener.onMove();

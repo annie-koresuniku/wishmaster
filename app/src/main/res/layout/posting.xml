@@ -135,8 +135,15 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_gravity="center"
-                                android:id="@+id/captcha_timeout_container">
+                                android:id="@+id/captcha_timeout_container"
+                                android:visibility="gone">
 
+                                <TextView
+                                    android:text="Капча протухла"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:id="@+id/textView"
+                                    android:textColor="@android:color/holo_red_dark" />
                             </FrameLayout>
                         </FrameLayout>
 
@@ -155,7 +162,7 @@
                             android:imeOptions="flagNoExtractUi"
                             android:layout_weight="1"
                             android:layout_gravity="center"
-                            android:hint="Ответ"
+                            android:hint="Капча"
                             android:layout_marginLeft="6dp" />
 
                     </LinearLayout>

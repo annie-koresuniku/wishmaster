@@ -4,20 +4,17 @@ import android.content.Context;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.bumptech.glide.Glide;
 import com.example.koresuniku.a2chclient.R;
-import com.example.koresuniku.a2chclient.activities.SingleThreadActivity;
-import com.example.koresuniku.a2chclient.activities.TouchImageView;
+import com.example.koresuniku.a2chclient.utilities.TouchImageView;
 
 import java.util.ArrayList;
 
 import static com.example.koresuniku.a2chclient.activities.SingleThreadActivity.fragmentCotainer;
-import static com.example.koresuniku.a2chclient.activities.SingleThreadActivity.imageViewContainer;
 import static com.example.koresuniku.a2chclient.activities.SingleThreadActivity.mediaPosition;
 import static com.example.koresuniku.a2chclient.activities.SingleThreadActivity.pathsGeneral;
 

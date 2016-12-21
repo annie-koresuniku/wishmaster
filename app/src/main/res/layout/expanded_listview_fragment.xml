@@ -12,8 +12,8 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_margin="1dp"
-        android:background="@color/canva_color_custom">
+        android:background="@color/canva_color_custom"
+        android:layout_margin="1dp">
 
         <ExpandableListView
             android:layout_width="match_parent"

@@ -86,6 +86,8 @@ public class Constants {
     public static Map<Integer, Integer> HIDDEN_STATE = new HashMap<>();
     public static int ANSWER_NUMBER_OPENED = -1;
 
+    public static Integer NOTIFICATIONS_COUNTER = -1;
+
     public static final Integer[] ERROR_IMAGES = {
             R.drawable.error,
             R.drawable.error1,
@@ -99,5 +101,6 @@ public class Constants {
             R.drawable.error10,
             R.drawable.error11
     };
+
 
 }
