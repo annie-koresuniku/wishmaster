@@ -1,6 +1,8 @@
 # wishmaster
 2ch.hk imageboard client for android
 
+Download current version: https://github.com/annie-koresuniku/Wishmaster/releases/download/1.0/wishmaster.apk
+
 ### Main fuctionality
 
 * Reading threads
