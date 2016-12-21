@@ -10,4 +10,4 @@
 * Watching WEBM videos and pictures
 * Navigation through post answers
 * Comfortable interaction like at original web-version
-* Much better than Dashchan and 2chbrowser, Алиса Двачевская одобряет)
+
