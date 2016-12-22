@@ -1,17 +1,22 @@
 package com.example.koresuniku.a2chclient.activities;
 
 
+import android.Manifest;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.support.v4.app.TaskStackBuilder;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -104,6 +109,7 @@ import java.util.regex.Pattern;
 public class SingleThreadActivity extends AppCompatActivity {
     private final static String LOG_TAG = SingleThreadActivity.class.getSimpleName();
     private static final int PICKFILE_RESULT_CODE = 1;
+
 
     private static Context activityContext;
     private static SingleThreadActivity activity;
@@ -552,10 +558,65 @@ public class SingleThreadActivity extends AppCompatActivity {
         switch (requestCode) {
             case PICKFILE_RESULT_CODE: {
                 if (resultCode == RESULT_OK) {
-                    String filePath = FetchPath.getPath(getApplicationContext(), data.getData());
-                    Log.i(LOG_TAG, "real filepath " + filePath);
-                    Constants.FILES_TO_ATTACH.add(filePath);
+                    //Log.i(LOG_TAG, "raw path " + data.getData().getAuthority() + data.getData().getPath());
+
+                    Log.i(LOG_TAG, "raw path " + data.getData());
+
+                    // String filePath = FetchPath.getPath(getApplicationContext(), Uri.parse(data.getData().getAuthority() + data.getData().getPath()));
+                    //String filePath = getRealPathFromURI(getApplicationContext(), data.getData());
+                    //String pathToCheck = data.
+                    //Log.i(LOG_TAG, "real filepath " + filePath);
+
+                    String filePath = "";
+                    Log.i(LOG_TAG, "sdk version " + Build.VERSION.SDK_INT);
+                    if (Build.VERSION.SDK_INT >= 23) {
+//                        Log.i(LOG_TAG, "raw path " + data.getDataString());
+//                        String pathToCheck = getRealPathFromURI(getApplicationContext(), Uri.parse(data.getDataString()));
+//                        Log.i(LOG_TAG, "pathToCheck " + pathToCheck);
+
+                        filePath = FetchPath.getPath(getApplicationContext(), data.getData());
+                        Constants.FILES_TO_ATTACH.add(filePath);
+
+                    } else {
+                        filePath = FetchPath.getPath(getApplicationContext(), data.getData());
+                        Constants.FILES_TO_ATTACH.add(filePath);
+                    }
+                    String name = "";
+                    try {
+                        for (int i = filePath.length() - 1; i >= 0; i--) {
+                            if (filePath.substring(i, i + 1).equals("/")) {
+                                name = filePath.substring(i, filePath.length());
+                            }
+                        }
+                    } catch (NullPointerException e) {
+                        Log.i(LOG_TAG, "nullpointerexception");
+                        Toast t = Toast.makeText(getApplicationContext(), "Непостабельный формат", Toast.LENGTH_SHORT);
+                        t.show();
+                    }
+                    Log.i(LOG_TAG, "Received name " + name);
+                    Constants.FILES_NAMES_TO_ATTACH.add(name);
                 }
+            }
+        }
+    }
+
+    public String getRealPathFromURI(Context context, Uri contentUri) {
+        Cursor cursor = null;
+        try {
+            String[] proj = {MediaStore.Images.ImageColumns.DATA};
+            //proj = null;
+            cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
+            Log.i(LOG_TAG, "cursor exists " + (cursor != null));
+            Log.i(LOG_TAG, "cursor columns " + cursor.getColumnName(0));
+
+            int column_index = cursor.getColumnIndexOrThrow("_data");
+            cursor.moveToFirst();
+            //cursor.moveToNext();
+            Log.i(LOG_TAG, "cursor.getString() " + cursor.getString(column_index));
+            return cursor.getString(column_index);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
             }
         }
     }
@@ -588,6 +649,7 @@ public class SingleThreadActivity extends AppCompatActivity {
         }
 
         Constants.FILES_TO_ATTACH = new ArrayList<>();
+        Constants.FILES_NAMES_TO_ATTACH = new ArrayList<>();
         super.onBackPressed();
     }
 

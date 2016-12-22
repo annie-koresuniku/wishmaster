@@ -128,9 +128,13 @@ public class PostFragment extends android.support.v4.app.Fragment {
             ArrayList<String> fileTexts = new ArrayList<>();
 
             for (String path : Constants.FILES_TO_ATTACH) {
-                File file = new File(path);
-                Log.i(LOG_TAG, "name " + file.getName());
-                fileTexts.add(file.getName());
+                try {
+                    File file = new File(path);
+                    Log.i(LOG_TAG, "name " + file.getName());
+                    fileTexts.add(file.getName());
+                } catch (NullPointerException e) {
+                    e.printStackTrace();
+                }
             }
 
             for (String textSingle : fileTexts) {
@@ -475,20 +479,39 @@ public class PostFragment extends android.support.v4.app.Fragment {
                         } else {
                             ByteArrayOutputStream bos = new ByteArrayOutputStream();
                             Log.i(LOG_TAG, "type " + type);
+                            int index = Constants.FILES_TO_ATTACH.indexOf(path);
                             if (type.equals("png")) {
                                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(
                                         getActivity().getContentResolver(), Uri.fromFile(new File(path)));
                                 bitmap.compress(Bitmap.CompressFormat.PNG, 75, bos);
-                                reqEntity.addPart("image", new ByteArrayBody(bos.toByteArray(), "image"));
+                                String name = Constants.FILES_NAMES_TO_ATTACH.get(index);
+                                reqEntity.addPart("image", new ByteArrayBody(bos.toByteArray(), name));
                             } else if (type.equals("jpeg") || type.equals("jpg")) {
                                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(
                                         getActivity().getContentResolver(), Uri.fromFile(new File(path)));
                                 bitmap.compress(Bitmap.CompressFormat.JPEG, 75, bos);
-                                reqEntity.addPart("image", new ByteArrayBody(bos.toByteArray(), "image"));
+                                String name = Constants.FILES_NAMES_TO_ATTACH.get(index);
+                                reqEntity.addPart("image", new ByteArrayBody(bos.toByteArray(), name));
+                            } else if (type.equals("gif")) {
+                                File gif = new File(path);
+                                int size = (int) gif.length();
+                                byte[] bytes = new byte[size];
+                                try {
+                                    BufferedInputStream buf = new BufferedInputStream(new FileInputStream(gif));
+                                    buf.read(bytes, 0, bytes.length);
+                                    buf.close();
+                                } catch (FileNotFoundException e) {
+                                    e.printStackTrace();
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                                String name = Constants.FILES_NAMES_TO_ATTACH.get(index);
+                                reqEntity.addPart(name, new FileBody(gif));
                             } else {
                                 Toast t = Toast.makeText(getActivity(), "Непостабельный формат", Toast.LENGTH_SHORT);
                                 t.show();
                             }
+
                         }
                     }
                 }

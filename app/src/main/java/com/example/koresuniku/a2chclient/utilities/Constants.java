@@ -75,6 +75,7 @@ public class Constants {
     public static String LINK_TO_ANSWER;
     public static int LISTVIEW_POSITION = 0;
     public static ArrayList<String> FILES_TO_ATTACH = new ArrayList<>();
+    public static ArrayList<String> FILES_NAMES_TO_ATTACH = new ArrayList<>();
 
     public static File DIRECTORY = null;
 

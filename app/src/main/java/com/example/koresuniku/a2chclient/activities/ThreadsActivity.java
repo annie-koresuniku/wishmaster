@@ -150,6 +150,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                 position = mThreadsListView.getPositionForView(view);
                 // Log.i(LOG_TAG, "On click position " + String.valueOf(position));
                 Constants.FILES_TO_ATTACH = new ArrayList<String>();
+                Constants.FILES_NAMES_TO_ATTACH = new ArrayList<String>();
                 ArrayList<Map<String, String>> threadPageClicked = threadsList.get(chosenPage);
                 Map<String, String> itemThreadClicked = threadPageClicked.get(i);
                 String threadNumber = itemThreadClicked.get(Constants.NUMBER);
@@ -759,6 +760,14 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                     String filePath = FetchPath.getPath(getApplicationContext(), data.getData());
                     Log.i(LOG_TAG, "real filepath " + filePath);
                     Constants.FILES_TO_ATTACH.add(filePath);
+                    String name = "";
+                    for (int i = filePath.length() - 1; i >= 0; i--) {
+                        if (filePath.substring(i, i + 1).equals("/")) {
+                            name = filePath.substring(i, filePath.length());
+                        }
+                    }
+                    Log.i(LOG_TAG, "Received name " + name);
+                    Constants.FILES_NAMES_TO_ATTACH.add(name);
                 }
             }
         }

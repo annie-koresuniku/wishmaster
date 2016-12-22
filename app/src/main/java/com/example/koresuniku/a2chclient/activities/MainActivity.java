@@ -1,14 +1,18 @@
 package com.example.koresuniku.a2chclient.activities;
 
+import android.Manifest;
 import android.app.SearchManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
@@ -56,6 +60,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private final static String LOG_TAG = MainActivity.class.getSimpleName();
+    private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 1;
 
     public static String[] adultBoards;
     public static String[] gamesBoards;
@@ -114,7 +119,32 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         createFolderForContent();
+        if (Build.VERSION.SDK_INT >= 23) {
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... voids) {
+                    if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                            != PackageManager.PERMISSION_GRANTED) {
 
+                        // Should we show an explanation?
+                        if (shouldShowRequestPermissionRationale(
+                                Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                            // Explain to the user why we need to read the contacts
+                        }
+
+                        requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                                MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+
+                        // MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE is an
+                        // app-defined int constant
+
+                    }
+                    return null;
+                }
+
+
+            }.execute();
+        }
         mMainLinearLayout = (LinearLayout) findViewById(R.id.activity_main);
         mLoadingTextView = (TextView) findViewById(R.id.boards_loading);
         mMainTextView = (TextView) findViewById(R.id.main_textview);
@@ -139,6 +169,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
 
     private void createFolderForContent() {
         File myDirectory = new File(Environment.getExternalStorageDirectory() + "/Download", "Wishmaster");
