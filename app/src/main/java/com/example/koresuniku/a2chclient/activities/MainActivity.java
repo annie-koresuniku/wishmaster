@@ -42,11 +42,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -125,19 +122,13 @@ public class MainActivity extends AppCompatActivity {
                 protected Void doInBackground(Void... voids) {
                     if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                             != PackageManager.PERMISSION_GRANTED) {
-
                         // Should we show an explanation?
                         if (shouldShowRequestPermissionRationale(
                                 Manifest.permission.READ_EXTERNAL_STORAGE)) {
                             // Explain to the user why we need to read the contacts
                         }
-
                         requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                                 MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
-
-                        // MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE is an
-                        // app-defined int constant
-
                     }
                     return null;
                 }
@@ -169,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
-
 
     private void createFolderForContent() {
         File myDirectory = new File(Environment.getExternalStorageDirectory() + "/Download", "Wishmaster");
@@ -258,10 +248,7 @@ public class MainActivity extends AppCompatActivity {
 
         Log.i(LOG_TAG, db.getPath());
         copyDataBase();
-//        Cursor cursorD = db.query(
-//                BoardsContract.BoardsEntry.TABLE_NAME,
-//                projection, null, null, null, null, null
-//        );
+
         Cursor cursorD = db.rawQuery("SELECT * FROM boards;", null);
         Log.v(LOG_TAG, "Query Result:" + cursorD.getCount());
         cursorD.close();
@@ -269,22 +256,6 @@ public class MainActivity extends AppCompatActivity {
         dbManager.close();
         initializeBoards();
 
-//        mBoardsDatabaseReadable = mBoardsHelper.getReadableDatabase();
-//        mBoardsDatabaseWritable = mBoardsHelper.getWritableDatabase();
-
-//        Cursor cursor = mBoardsDatabaseReadable.query(
-//                BoardsContract.BoardsEntry.TABLE_NAME,
-//                projection, null, null, null, null, null
-//        );
-//
-//        Log.v(LOG_TAG, String.valueOf(cursor.getCount()));
-//        if (cursor.getCount() == 0) {
-//            WriteToBoardsDatabaseTask writeToBoardsDatabaseTask =
-//                    new WriteToBoardsDatabaseTask(getApplicationContext());
-//            writeToBoardsDatabaseTask.execute();
-//        } else {
-//            initializeBoards();
-//        }
     }
 
     private void copyDataBase() throws IOException {
@@ -317,10 +288,6 @@ public class MainActivity extends AppCompatActivity {
         List<String> techBoardsL = new ArrayList<>();
         List<String> japaneseBoardsL = new ArrayList<>();
 
-//        Cursor cursor = mBoardsDatabaseReadable.query(
-//                BoardsContract.BoardsEntry.TABLE_NAME,
-//                projection, null, null, null, null, null
-//        );
         DataBaseHelper dbManager = new DataBaseHelper(this);
         Log.v(LOG_TAG, "Database is there with version: " + dbManager.getReadableDatabase().getVersion());
 
@@ -387,26 +354,6 @@ public class MainActivity extends AppCompatActivity {
         getFragmentManager().beginTransaction()
                 .add(R.id.fragment_container, new ExpandedListViewFragment())
                 .commit();
-
-//        File db = new File("/data/data/com.example.koresuniku.a2chclient/databases/boards.db");
-//        Log.i(LOG_TAG, "db exists " + (db != null));
-//        File save = new File(Constants.DIRECTORY, "database");
-//        try {
-//            FileInputStream fis = new FileInputStream(db);
-//            FileOutputStream fos = new FileOutputStream(save);
-//            byte[] buffer = new byte[4 * 1024]; // or other buffer size
-//            int read;
-//            while ((read = fis.read(buffer)) != -1) {
-//                fos.write(buffer, 0, read);
-//            }
-//            fos.flush();
-//            fos.close();
-//            fis.close();
-//        } catch (FileNotFoundException e1) {
-//            e1.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
     }
 
     private String[] formatList(List<String> list) {
@@ -652,6 +599,4 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
-
-
 }
