@@ -3,11 +3,15 @@ package com.example.koresuniku.a2chclient.activities;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.util.LruCache;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
@@ -51,7 +55,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -63,6 +69,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.example.koresuniku.a2chclient.activities.SingleThreadActivity.deleteDir;
 import static com.example.koresuniku.a2chclient.utilities.Constants.BOARD;
 import static com.example.koresuniku.a2chclient.utilities.Constants.PAGE;
 
@@ -99,6 +106,8 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
     public static ArrayList<String> unformattedPageComments = new ArrayList<>();
     public static Map<Integer, String> formattedTextGeneral;
     public static ArrayList<String> formattedTextsGeneral = new ArrayList<>();
+    public static Map<Integer, ArrayList<View>> itemViews = new HashMap<>();
+    private LruCache<String, Bitmap> mMemoryCache;
 
     private ListView mThreadsListView;
     private LayoutInflater mLayoutInflater;
@@ -114,6 +123,8 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
 
     public static Animation fallingUp;
     public static Animation fallingDown;
+
+    private ProgressBar pb;
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
@@ -142,6 +153,7 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
 
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh);
         swipeRefreshLayout.setOnRefreshListener(this);
+        pb = new ProgressBar(this, null, android.R.attr.progressBarStyle);
         mLayoutInflater = getLayoutInflater();
         mThreadsListView = (ListView) findViewById(R.id.threads_listview);
         mThreadsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -173,12 +185,6 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
     }
 
     @Override
-    protected void onPostResume() {
-        super.onPostResume();
-        Log.i(LOG_TAG, "onResume()");
-    }
-
-    @Override
     protected void onPause() {
         super.onPause();
         Log.i(LOG_TAG, "onPause()");
@@ -195,6 +201,8 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         super.onCreate(savedInstanceState);
         setTitle("");
 
+        createMemoryCacheForBitmaps();
+
         postingFragmentAvailable = Constants.POSTING_FRAGMENT_IS_OPENED;
         Constants.SPOILERS_LOCALIZATIONS = new HashMap<>();
         formattedTextGeneral = new HashMap<>();
@@ -205,6 +213,32 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         position = 0;
         GetPagesOnBoardTask pagesOnBoardTask = new GetPagesOnBoardTask();
         pagesOnBoardTask.execute();
+    }
+
+    private void createMemoryCacheForBitmaps() {
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+        // Use 1/8th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 32;
+
+        mMemoryCache = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in kilobytes rather than
+                // number of items.
+                return bitmap.getByteCount() / 1024;
+            }
+        };
+    }
+
+    public void addBitmapToMemoryCache(String key, Bitmap bitmap) {
+        if (getBitmapFromMemCache(key) == null) {
+            mMemoryCache.put(key, bitmap);
+        }
+    }
+
+    public Bitmap getBitmapFromMemCache(String key) {
+        return mMemoryCache.get(key);
     }
 
     @Override
@@ -237,6 +271,8 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                 if (chosenPage <= pagesOnBoardL - 3) {
                     chosenPage++;
                     Log.i(LOG_TAG, "clicked to page " + chosenPage);
+                    //formattedTextGeneral = new HashMap<>();
+
 
                     ThreadsTask tt = new ThreadsTask(getApplicationContext());
                     tt.execute();
@@ -325,7 +361,10 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
     @Override
     protected void onStop() {
         super.onStop();
-        //Constants.POSTING_FRAGMENT_IS_OPENED = false;
+        trimCache(getApplicationContext());
+        Log.i(LOG_TAG, "inside onStop()");
+        System.gc();
+        mMemoryCache.evictAll();
     }
 
     @Override
@@ -394,255 +433,80 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
             return threadsList.indexOf(item);
         }
 
+        int index = -1;
         @Override
-        public View getView(int i, View view, ViewGroup viewGroup) {
-            final View rootView = mLayoutInflater.inflate(R.layout.thread_item_single_image, viewGroup, false);
-            viewHolder = new ViewHolder();
-
-            Map<String, String> item = getItem(i);
-            String date = item.get(Constants.DATE);
-            String number = item.get(Constants.NUMBER);
+        public View getView(final int i, View view, ViewGroup viewGroup) {
+//            final View rootView = mLayoutInflater.inflate(R.layout.thread_item_single_image, viewGroup, false);
+//
+            View rootView = itemViews.get(chosenPage).get(i);
+            view = rootView;
+            index = i;
+            Map<String, String> item = threadsList.get(i);
             final String thumb = item.get(Constants.THUMB);
-            String comment = item.get(Constants.COMMENT);
-            String op = item.get(Constants.OP);
-            String answersCount = item.get(Constants.ANSWERS_COUNT);
-            String filesCount = item.get(Constants.FILES_COUNT);
-            String subjectOfThread = item.get(Constants.SUBJECT_OF_THREAD);
-            String opName = item.get(Constants.OP_NAME);
-            String displayName = item.get(Constants.DISPLAY_NAME);
-            String size = item.get(Constants.SIZE);
-            String width = item.get(Constants.WIDTH);
-            String height = item.get(Constants.HEIGHT);
             String path = item.get(Constants.PATH);
-            String duration = item.get(Constants.DURATION);
-
-            unformattedPageComments.add(comment);
-
-            rootView.setContentDescription(number);
-
-            viewHolder.mThreadItemHeader =
-                    (TextView) rootView.findViewById(R.id.thread_item_header);
-            viewHolder.mThreadItemImage =
-                    (ImageView) rootView.findViewById(R.id.thread_item_image);
-            viewHolder.mThreadItemBody =
-                    (TextView) rootView.findViewById(R.id.thread_item_body);
-            viewHolder.mThreadItemAnswersAndFiles =
-                    (TextView) rootView.findViewById(R.id.thread_item_answers_and_files);
-            viewHolder.mThreadItemShortInfo =
-                    (TextView) rootView.findViewById(R.id.short_info_view);
-            rootView.setTag(viewHolder);
-
-            String shortInfo = "(" + size + "Кб, " + width + "x" + height + ")";
-
-            if (duration != null) {
-                if (!duration.equals("")) {
-                    shortInfo = shortInfo.substring(0, shortInfo.length() - 1);
-                    shortInfo += ", " + duration + ")";
-                }
-            }
-            viewHolder.mThreadItemShortInfo.setText(shortInfo);
-            if (op.equals("0")) {
-                op = "";
-            } else {
-                op = "<font color=\"#008000\"># OP</font>";
-            }
-            SpannableStringBuilder builderHeader = new SpannableStringBuilder();
-            if (subjectOfThread.equals("")
-                    || intentBoard.equals("b") || subjectOfThread.equals(" ") ) {
-                subjectOfThread = "";
-            } else {
-                subjectOfThread ="<b><font color=\"#002249\">" + subjectOfThread + "</font></b>";
-            }
-            if (opName.equals("")) {
-                opName = defaultOpName;
-            }
-            builderHeader.append(subjectOfThread + " ");
-            builderHeader.append(opName + " ");
-            builderHeader.append(op + " ");
-            builderHeader.append(date + " ");
-            builderHeader.append(number);
-
-            viewHolder.mThreadItemHeader.setText(
-                    Html.fromHtml(builderHeader.toString()), TextView.BufferType.SPANNABLE);
+            final ImageView mThreadItemImage =
+                    (ImageView) view.findViewById(R.id.thread_item_image);
             if (!(thumb.equals(""))) {
-                //Log.i(LOG_TAG, "Path " + path);
                 if (path.substring(path.length() - 4, path.length()).equals("webm")) {
-                    Picasso.with(mContext).load("https://2ch.hk/" + thumb)
-                            .into(viewHolder.mThreadItemImage);
+                    new AsyncTask<Void, Void, Void>() {
+                        @Override
+                        protected Void doInBackground(Void... voids) {
+                            try {
+                                URL url = new URL("https://2ch.hk/" + thumb);
+                                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                                connection.setDoInput(true);
+                                connection.connect();
+                                InputStream input = connection.getInputStream();
+                                addBitmapToMemoryCache(String.valueOf(i), BitmapFactory.decodeStream(input));
+                            } catch (IOException e) {
+                                // Log exception
+                            }
+                            return null;
+                        }
+
+                        @Override
+                        protected void onPostExecute(Void voids) {
+//                            Picasso.with(getApplicationContext()).load("https://2ch.hk/" + thumb)
+//                                    .into(mThreadItemImage);
+                            mThreadItemImage.setImageBitmap(getBitmapFromMemCache(String.valueOf(i)));
+                        }
+                    }.execute();
 
                 } else {
-                    ImageView webmImageview = (ImageView) rootView.findViewById(R.id.webm_imageview);
+                    ImageView webmImageview = (ImageView) view.findViewById(R.id.webm_imageview);
                     webmImageview.setVisibility(View.GONE);
-                    Picasso.with(mContext).load("https://2ch.hk/" + thumb)
-                            .into(viewHolder.mThreadItemImage);
+                    new AsyncTask<Void, Void, Bitmap>() {
+                        @Override
+                        protected Bitmap doInBackground(Void... voids) {
+                            try {
+                                URL url = new URL("https://2ch.hk/" + thumb);
+                                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                                connection.setDoInput(true);
+                                connection.connect();
+                                InputStream input = connection.getInputStream();
+                                addBitmapToMemoryCache(String.valueOf(i), BitmapFactory.decodeStream(input));
+                            } catch (IOException e) {
+                                // Log exception
+                            }
+                            return null;
+                        }
+
+                        @Override
+                        protected void onPostExecute(Bitmap bitmap) {
+//                            Picasso.with(getApplicationContext()).load("https://2ch.hk/" + thumb)
+//                                    .into(mThreadItemImage);
+                            mThreadItemImage.setImageBitmap(getBitmapFromMemCache(String.valueOf(i)));
+                        }
+                    }.execute();
                 }
             } else {
                 LinearLayout imageContainer =
-                        (LinearLayout) rootView.findViewById(R.id.image_item_container);
+                        (LinearLayout) view.findViewById(R.id.image_item_container);
                 imageContainer.setVisibility(View.GONE);
-
             }
-            SpannableStringBuilder builderBody = new SpannableStringBuilder();
-            builderBody.append(comment);
-
-            viewHolder.mThreadItemBody.setMovementMethod(CustomLinkMovementMethod.getInstance(
-                    getApplicationContext(), true, null, null, i, null
-            ));
-            viewHolder.mThreadItemBody.setFocusable(false);
-            //viewHolder.mThreadItemBody.setClickable(false);
-            viewHolder.mThreadItemBody.setLongClickable(false);
-
-            viewHolder.mThreadItemBody.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    position = mThreadsListView.getPositionForView(view);
-
-                    Intent intent = new Intent(getApplicationContext(), SingleThreadActivity.class);
-                    intent.putExtra(Constants.NUMBER, rootView.getContentDescription());
-                    intent.putExtra(Constants.BOARD, intentBoard);
-                    intent.putExtra(Constants.PAGE, String.valueOf(chosenPage));
-                    Constants.FROM_SINGLE_THREAD = false;
-                    startActivity(intent);
-                }
-            });
-
-            //SpannableString ss = new SpannableString(builderBody);
-            //ss = setSpoilerSpans(i, ss);
-            CommentTagHandler commentTagHandler = new CommentTagHandler(i, true, viewHolder.mThreadItemBody);
-            viewHolder.mThreadItemBody.setText(Html.fromHtml(builderBody.toString(), null, commentTagHandler), TextView.BufferType.SPANNABLE);
-            int remainderAnswers = Integer.parseInt(
-                    answersCount.substring(answersCount.length() - 1, answersCount.length()));
-            int remainderFiles = Integer.parseInt(
-                    filesCount.substring(filesCount.length() - 1, filesCount.length()));
-
-            String missedPosts = "";
-            switch (remainderAnswers) {
-                case 1: {
-                    if (answersCount.length() >= 2) {
-                        if (!answersCount.substring(
-                                answersCount.length() - 2, answersCount.length()).equals("11")) {
-                            missedPosts = "Пропущен " + answersCount + " пост";
-                            break;
-                        } else {
-                            missedPosts = "Пропущено " + answersCount + " постов";
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case 2: {
-                    if (answersCount.length() >= 2) {
-                        if (!answersCount.substring(
-                                answersCount.length() - 2, answersCount.length()).equals("12")) {
-                            missedPosts = "Пропущено " + answersCount + " поста";
-                            break;
-                        } else {
-                            missedPosts = "Пропущено " + answersCount + " постов";
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case 3: {
-                    if (answersCount.length() >= 2) {
-                        if (!answersCount.substring(
-                                answersCount.length() - 2, answersCount.length()).equals("13")) {
-                            missedPosts = "Пропущено " + answersCount + " поста";
-                            break;
-                        } else {
-                            missedPosts = "Пропущено " + answersCount + " постов";
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case 4: {
-                    if (answersCount.length() >= 2) {
-                        if (!answersCount.substring(
-                                answersCount.length() - 2, answersCount.length()).equals("14")) {
-                            missedPosts = "Пропущено " + answersCount + " поста";
-                            break;
-                        } else {
-                            missedPosts = "Пропущено " + answersCount + " постов";
-                            break;
-                        }
-                    }
-                    break;
-                }
-                default: {
-                    missedPosts = "Пропущено " + answersCount + " постов";
-                }
-            }
-            String filesNumber = "";
-            switch (remainderFiles) {
-                case 1: {
-                    if (answersCount.length() >= 2) {
-                        if (!answersCount.substring(
-                                answersCount.length() - 2, answersCount.length()).equals("11")) {
-                            filesNumber = ", " + filesCount + " файл";
-                            break;
-                        } else {
-                            filesNumber = ", " + filesCount + " файлов";
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case 2: {
-                    if (answersCount.length() >= 2) {
-                        if (!answersCount.substring(
-                                answersCount.length() - 2, answersCount.length()).equals("12")) {
-                            filesNumber = ", " + filesCount + " файла";
-                            break;
-                        } else {
-                            filesNumber = ", " + filesCount + " файлов";
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case 3: {
-                    if (answersCount.length() >= 2) {
-                        if (!answersCount.substring(
-                                answersCount.length() - 2, answersCount.length()).equals("13")) {
-                            filesNumber = ", " + filesCount + " файла";
-                            break;
-                        } else {
-                            filesNumber = ", " + filesCount + " файлов";
-                            break;
-                        }
-                    }
-                    break;
-                }
-                case 4: {
-                    if (answersCount.length() >= 2) {
-                        if (!answersCount.substring(
-                                answersCount.length() - 2, answersCount.length()).equals("14")) {
-                            filesNumber = ", " + filesCount + " файла";
-                            break;
-                        } else {
-                            filesNumber = ", " + filesCount + " файлов";
-                            break;
-                        }
-                    }
-                    break;
-                }
-                default: {
-                    filesNumber = ", " + filesCount + " файлов";
-                }
-            }
-            if (missedPosts.equals("") && !filesNumber.equals("")) {
-                filesNumber = filesNumber.substring(2, filesNumber.length());
-            }
-
-            if ((missedPosts + filesNumber).equals("")) {
-                viewHolder.mThreadItemAnswersAndFiles.setVisibility(View.GONE);
-            } else {
-                viewHolder.mThreadItemAnswersAndFiles.setText(missedPosts + filesNumber);
-            }
-
-            return rootView;
+            return view;
         }
+
 
         private SpannableString setSpoilerSpans(int position, SpannableString ss) {
             int preCount = 0;
@@ -842,11 +706,267 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
         protected void onPostExecute(ArrayList<ArrayList<Map<String, String>>> maps) {
             Log.v(LOG_TAG, "Inside onPostExecute() " + intentPage);
             Log.i(LOG_TAG, "SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY " + Constants.SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY);
+            CreateViewsTask cvt = new CreateViewsTask();
+            cvt.execute();
+
+        }
+
+        private class CreateViewsTask extends AsyncTask<Void, Void, Void> {
+            private final String LOG_TAG = CreateViewsTask.class.getSimpleName();
+
+            @Override
+            protected Void doInBackground(Void... voids) {
+                Log.i(LOG_TAG, "doInBackground()");
+                ArrayList<View> views = new ArrayList<>();
+                for (int i = 0; i < threadsList.get(chosenPage).size(); i++) {
+                    final ViewHolder viewHolder = new ViewHolder();
+
+                    final View rootView = mLayoutInflater.inflate(R.layout.thread_item_single_image, null, false);
+
+                    Log.i(LOG_TAG, "threadList size " + threadsList.size());
+                    Log.i(LOG_TAG, "chosenPage " + chosenPage);
+                    Map<String, String> item = threadsList.get(chosenPage).get(i);
+                    Log.i(LOG_TAG, "arraylist size " + threadsList.get(chosenPage).size());
+                    String date = item.get(Constants.DATE);
+                    String number = item.get(Constants.NUMBER);
+                    final String thumb = item.get(Constants.THUMB);
+                    String comment = item.get(Constants.COMMENT);
+                    String op = item.get(Constants.OP);
+                    String answersCount = item.get(Constants.ANSWERS_COUNT);
+                    String filesCount = item.get(Constants.FILES_COUNT);
+                    String subjectOfThread = item.get(Constants.SUBJECT_OF_THREAD);
+                    String opName = item.get(Constants.OP_NAME);
+                    String displayName = item.get(Constants.DISPLAY_NAME);
+                    String size = item.get(Constants.SIZE);
+                    String width = item.get(Constants.WIDTH);
+                    String height = item.get(Constants.HEIGHT);
+                    String path = item.get(Constants.PATH);
+                    String duration = item.get(Constants.DURATION);
+
+                    unformattedPageComments.add(comment);
+
+                    rootView.setContentDescription(number);
+
+                    viewHolder.mThreadItemHeader =
+                            (TextView) rootView.findViewById(R.id.thread_item_header);
+                    viewHolder.mThreadItemImage =
+                            (ImageView) rootView.findViewById(R.id.thread_item_image);
+                    viewHolder.mThreadItemBody =
+                            (TextView) rootView.findViewById(R.id.thread_item_body);
+                    viewHolder.mThreadItemAnswersAndFiles =
+                            (TextView) rootView.findViewById(R.id.thread_item_answers_and_files);
+                    viewHolder.mThreadItemShortInfo =
+                            (TextView) rootView.findViewById(R.id.short_info_view);
+                    rootView.setTag(viewHolder);
+
+                    String shortInfo = "(" + size + "Кб, " + width + "x" + height + ")";
+
+                    if (duration != null) {
+                        if (!duration.equals("")) {
+                            shortInfo = shortInfo.substring(0, shortInfo.length() - 1);
+                            shortInfo += ", " + duration + ")";
+                        }
+                }
+                    viewHolder.mThreadItemShortInfo.setText(shortInfo);
+                    Log.i(LOG_TAG, "text setted " + viewHolder.mThreadItemShortInfo.getText());
+                    if (op.equals("0")) {
+                        op = "";
+                    } else {
+                        op = "<font color=\"#008000\"># OP</font>";
+                    }
+                    SpannableStringBuilder builderHeader = new SpannableStringBuilder();
+                    if (subjectOfThread.equals("")
+                            || intentBoard.equals("b") || subjectOfThread.equals(" ")) {
+                        subjectOfThread = "";
+                    } else {
+                        subjectOfThread = "<b><font color=\"#002249\">" + subjectOfThread + "</font></b>";
+                    }
+                    if (opName.equals("")) {
+                        opName = defaultOpName;
+                    }
+                    builderHeader.append(subjectOfThread + " ");
+                    builderHeader.append(opName + " ");
+                    builderHeader.append(op + " ");
+                    builderHeader.append(date + " ");
+                    builderHeader.append(number);
+
+                    viewHolder.mThreadItemHeader.setText(
+                            Html.fromHtml(builderHeader.toString()), TextView.BufferType.SPANNABLE);
+
+                    SpannableStringBuilder builderBody = new SpannableStringBuilder();
+                    builderBody.append(comment);
+
+                    viewHolder.mThreadItemBody.setMovementMethod(CustomLinkMovementMethod.getInstance(
+                            getApplicationContext(), true, null, null, i, null
+                    ));
+                    viewHolder.mThreadItemBody.setFocusable(false);
+                    //viewHolder.mThreadItemBody.setClickable(false);
+                    viewHolder.mThreadItemBody.setLongClickable(false);
+
+                    viewHolder.mThreadItemBody.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            position = mThreadsListView.getPositionForView(view);
+
+                            Intent intent = new Intent(getApplicationContext(), SingleThreadActivity.class);
+                            intent.putExtra(Constants.NUMBER, rootView.getContentDescription());
+                            intent.putExtra(Constants.BOARD, intentBoard);
+                            intent.putExtra(Constants.PAGE, String.valueOf(chosenPage));
+                            Constants.FROM_SINGLE_THREAD = false;
+                            startActivity(intent);
+                        }
+                    });
+
+                    //SpannableString ss = new SpannableString(builderBody);
+                    //ss = setSpoilerSpans(i, ss);
+                    CommentTagHandler commentTagHandler = new CommentTagHandler(i, true, viewHolder.mThreadItemBody);
+                    viewHolder.mThreadItemBody.setText(Html.fromHtml(builderBody.toString(), null, commentTagHandler), TextView.BufferType.SPANNABLE);
+                    int remainderAnswers = Integer.parseInt(
+                            answersCount.substring(answersCount.length() - 1, answersCount.length()));
+                    int remainderFiles = Integer.parseInt(
+                            filesCount.substring(filesCount.length() - 1, filesCount.length()));
+
+                    String missedPosts = "";
+                    switch (remainderAnswers) {
+                        case 1: {
+                            if (answersCount.length() >= 2) {
+                                if (!answersCount.substring(
+                                        answersCount.length() - 2, answersCount.length()).equals("11")) {
+                                    missedPosts = "Пропущен " + answersCount + " пост";
+                                    break;
+                                } else {
+                                    missedPosts = "Пропущено " + answersCount + " постов";
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        case 2: {
+                            if (answersCount.length() >= 2) {
+                                if (!answersCount.substring(
+                                        answersCount.length() - 2, answersCount.length()).equals("12")) {
+                                    missedPosts = "Пропущено " + answersCount + " поста";
+                                    break;
+                                } else {
+                                    missedPosts = "Пропущено " + answersCount + " постов";
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        case 3: {
+                            if (answersCount.length() >= 2) {
+                                if (!answersCount.substring(
+                                        answersCount.length() - 2, answersCount.length()).equals("13")) {
+                                    missedPosts = "Пропущено " + answersCount + " поста";
+                                    break;
+                                } else {
+                                    missedPosts = "Пропущено " + answersCount + " постов";
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        case 4: {
+                            if (answersCount.length() >= 2) {
+                                if (!answersCount.substring(
+                                        answersCount.length() - 2, answersCount.length()).equals("14")) {
+                                    missedPosts = "Пропущено " + answersCount + " поста";
+                                    break;
+                                } else {
+                                    missedPosts = "Пропущено " + answersCount + " постов";
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        default: {
+                            missedPosts = "Пропущено " + answersCount + " постов";
+                        }
+                    }
+                    String filesNumber = "";
+                    switch (remainderFiles) {
+                        case 1: {
+                            if (answersCount.length() >= 2) {
+                                if (!answersCount.substring(
+                                        answersCount.length() - 2, answersCount.length()).equals("11")) {
+                                    filesNumber = ", " + filesCount + " файл";
+                                    break;
+                                } else {
+                                    filesNumber = ", " + filesCount + " файлов";
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        case 2: {
+                            if (answersCount.length() >= 2) {
+                                if (!answersCount.substring(
+                                        answersCount.length() - 2, answersCount.length()).equals("12")) {
+                                    filesNumber = ", " + filesCount + " файла";
+                                    break;
+                                } else {
+                                    filesNumber = ", " + filesCount + " файлов";
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        case 3: {
+                            if (answersCount.length() >= 2) {
+                                if (!answersCount.substring(
+                                        answersCount.length() - 2, answersCount.length()).equals("13")) {
+                                    filesNumber = ", " + filesCount + " файла";
+                                    break;
+                                } else {
+                                    filesNumber = ", " + filesCount + " файлов";
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        case 4: {
+                            if (answersCount.length() >= 2) {
+                                if (!answersCount.substring(
+                                        answersCount.length() - 2, answersCount.length()).equals("14")) {
+                                    filesNumber = ", " + filesCount + " файла";
+                                    break;
+                                } else {
+                                    filesNumber = ", " + filesCount + " файлов";
+                                    break;
+                                }
+                            }
+                            break;
+                        }
+                        default: {
+                            filesNumber = ", " + filesCount + " файлов";
+                        }
+                    }
+                    if (missedPosts.equals("") && !filesNumber.equals("")) {
+                        filesNumber = filesNumber.substring(2, filesNumber.length());
+                    }
+
+                    if ((missedPosts + filesNumber).equals("")) {
+                        viewHolder.mThreadItemAnswersAndFiles.setVisibility(View.GONE);
+                    } else {
+                        viewHolder.mThreadItemAnswersAndFiles.setText(missedPosts + filesNumber);
+                    }
+
+
+                    views.add(rootView);
+                }
+                itemViews.put(chosenPage, views);
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
 
                 if (startAdapter) {
-                   // setContentView(R.layout.threads_layout_container);
                     ThreadsAdapter adapter = new ThreadsAdapter(mContext, threadsList.get(Integer.parseInt(intentPage)));
+
                     mThreadsListView.setAdapter(adapter);
+                    mThreadsListView.addFooterView(pb);
                     frameLayoutInner.setVisibility(View.VISIBLE);
                     progressBar.setVisibility(View.GONE);
                     setTitle(boardName);
@@ -858,8 +978,9 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
                 Log.v(LOG_TAG, "Forward item pressed, go to page " + chosenPage);
                 mPageIndex.setTitle(String.valueOf(chosenPage));
             }
-            }
         }
+        }
+    }
 
     private void getSpoilers(int position) {
         ArrayList<String> spoilersLocalizations = new ArrayList<>();
@@ -988,7 +1109,36 @@ public class ThreadsActivity extends AppCompatActivity implements SwipeRefreshLa
             }
             return null;
         }
+
+    public static void trimCache(Context context) {
+        try {
+            File dir = context.getCacheDir();
+            if (dir != null && dir.isDirectory()) {
+                deleteDirTrim(dir);
+            }
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
     }
+
+    public static boolean deleteDirTrim(File dir) {
+        if (dir != null && dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++) {
+                boolean success = deleteDir(new File(dir, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+
+        // The directory is now empty so delete it
+        return dir.delete();
+    }
+}
+
+
+
 
 
 

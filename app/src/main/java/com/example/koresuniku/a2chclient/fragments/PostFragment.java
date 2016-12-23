@@ -63,6 +63,8 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
+import static com.example.koresuniku.a2chclient.activities.SingleThreadActivity.deleteDir;
+
 public class PostFragment extends android.support.v4.app.Fragment {
     private final static String LOG_TAG = PostFragment.class.getSimpleName();
     private static final int PICKFILE_RESULT_CODE = 1;
@@ -566,4 +568,6 @@ public class PostFragment extends android.support.v4.app.Fragment {
             return null;
         }
     }
+
+
 }

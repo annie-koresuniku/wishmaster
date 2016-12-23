@@ -35,7 +35,6 @@ import static com.example.koresuniku.a2chclient.activities.MainActivity.creativi
 import static com.example.koresuniku.a2chclient.activities.MainActivity.differentBoards;
 import static com.example.koresuniku.a2chclient.activities.MainActivity.gamesBoards;
 import static com.example.koresuniku.a2chclient.activities.MainActivity.japaneseBoards;
-import static com.example.koresuniku.a2chclient.activities.MainActivity.mBoardsDatabaseReadable;
 import static com.example.koresuniku.a2chclient.activities.MainActivity.politicsBoards;
 import static com.example.koresuniku.a2chclient.activities.MainActivity.projection;
 import static com.example.koresuniku.a2chclient.activities.MainActivity.subjectsBoards;

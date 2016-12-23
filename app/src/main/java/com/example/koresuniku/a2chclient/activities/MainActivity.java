@@ -84,8 +84,7 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private BoardsHelper mBoardsHelper;
-    public static SQLiteDatabase mBoardsDatabaseReadable;
-    private SQLiteDatabase mBoardsDatabaseWritable;
+
 
     @Override
     protected void onRestart() {
@@ -93,8 +92,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        System.gc();
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
+
         SharedPreferences sharedPreferences =
                 PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         int jill = Integer.parseInt(sharedPreferences.getString(
@@ -116,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         createFolderForContent();
+
         if (Build.VERSION.SDK_INT >= 23) {
             new AsyncTask<Void, Void, Void>() {
                 @Override
@@ -232,9 +239,7 @@ public class MainActivity extends AppCompatActivity {
         builder.append(mBText);
         builder.append(Constants.MAIN_TEXT_SECOND);
 
-
         mMainTextView.setText(Html.fromHtml(builder.toString()), TextView.BufferType.SPANNABLE);
-        //mMainTextView.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
     private void checkDatabaseIfExists() throws IOException {
@@ -254,6 +259,7 @@ public class MainActivity extends AppCompatActivity {
         cursorD.close();
         db.close();
         dbManager.close();
+
         initializeBoards();
 
     }
@@ -354,6 +360,11 @@ public class MainActivity extends AppCompatActivity {
         getFragmentManager().beginTransaction()
                 .add(R.id.fragment_container, new ExpandedListViewFragment())
                 .commit();
+
+        dbManager.close();
+        dbase.close();
+        cursor.close();
+
     }
 
     private String[] formatList(List<String> list) {

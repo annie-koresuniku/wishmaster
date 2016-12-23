@@ -23,14 +23,14 @@
         <LinearLayout
             android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
 
             <LinearLayout
                 android:orientation="vertical"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:gravity="top"
-                android:id="@+id/image_item_container">
+                android:id="@+id/image_item_container"
+                android:gravity="top">
 
                 <FrameLayout
                     android:layout_width="wrap_content"
@@ -58,47 +58,43 @@
                     android:id="@+id/short_info_view"
                     android:textSize="11sp"
                     android:layout_marginTop="2dp"
-                    android:layout_gravity="top" />
+                    android:layout_gravity="top"
+                    android:lines="3" />
             </LinearLayout>
 
-            <FrameLayout
+            <LinearLayout
+                android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="6dp"
                 android:id="@+id/body_text_item_container">
 
-                <LinearLayout
-                    android:orientation="vertical"
+                <TextView
+                    android:text="comment"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="12dp"
-                    android:layout_marginRight="6dp">
+                    android:id="@+id/thread_item_body"
+                    android:singleLine="false"
+                    style="@android:style/Widget.DeviceDefault.Light.TextView"
+                    android:textAppearance="@style/TextAppearance.AppCompat"
+                    android:textColor="@color/text_custom"
+                    android:maxLines="8"
+                    android:lines="8" />
 
-                    <TextView
-                        android:text="comment"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:id="@+id/thread_item_body"
-                        android:singleLine="false"
-                        style="@android:style/Widget.DeviceDefault.Light.TextView"
-                        android:textAppearance="@style/TextAppearance.AppCompat"
-                        android:textColor="@color/text_custom"
-                        android:lines="8" />
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="12dp" />
 
-                    <Space
-                        android:layout_width="match_parent"
-                        android:layout_height="12dp" />
+                <TextView
+                    android:text="TextView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/thread_item_answers_and_files"
+                    android:gravity="bottom"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
-                    <TextView
-                        android:text="TextView"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:id="@+id/thread_item_answers_and_files"
-                        android:layout_gravity="bottom"
-                        android:gravity="bottom"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-            </FrameLayout>
         </LinearLayout>
 
     </LinearLayout>

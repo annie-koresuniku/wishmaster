@@ -339,8 +339,10 @@ public class SingleThreadActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.i(LOG_TAG, "ON STOP ");
+        Log.i(LOG_TAG, "onStop()");
         formattedTextsGeneral = new ArrayList<>();
+        deleteCache(getApplicationContext());
+        System.gc();
         //Constants.POSTING_FRAGMENT_IS_OPENED = false;
 
     }
@@ -600,27 +602,6 @@ public class SingleThreadActivity extends AppCompatActivity {
         }
     }
 
-    public String getRealPathFromURI(Context context, Uri contentUri) {
-        Cursor cursor = null;
-        try {
-            String[] proj = {MediaStore.Images.ImageColumns.DATA};
-            //proj = null;
-            cursor = context.getContentResolver().query(contentUri, proj, null, null, null);
-            Log.i(LOG_TAG, "cursor exists " + (cursor != null));
-            Log.i(LOG_TAG, "cursor columns " + cursor.getColumnName(0));
-
-            int column_index = cursor.getColumnIndexOrThrow("_data");
-            cursor.moveToFirst();
-            //cursor.moveToNext();
-            Log.i(LOG_TAG, "cursor.getString() " + cursor.getString(column_index));
-            return cursor.getString(column_index);
-        } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-        }
-    }
-
     public void onBackPressed() {
         Constants.SPOILERS_LOCALIZATIONS = new HashMap<>();
 
@@ -687,6 +668,7 @@ public class SingleThreadActivity extends AppCompatActivity {
                 }
             });
         }
+
 
         @Override
         public int getCount() {
@@ -1245,6 +1227,12 @@ public class SingleThreadActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         Log.i(LOG_TAG, "onDestroy()");
+        try {
+            trimCache(this);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     private void closeFullMedia() {
@@ -2058,6 +2046,32 @@ public class SingleThreadActivity extends AppCompatActivity {
         } else {
             return false;
         }
+    }
+
+    public static void trimCache(Context context) {
+        try {
+            File dir = context.getCacheDir();
+            if (dir != null && dir.isDirectory()) {
+                deleteDirTrim(dir);
+            }
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+    }
+
+    public static boolean deleteDirTrim(File dir) {
+        if (dir != null && dir.isDirectory()) {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++) {
+                boolean success = deleteDir(new File(dir, children[i]));
+                if (!success) {
+                    return false;
+                }
+            }
+        }
+
+        // The directory is now empty so delete it
+        return dir.delete();
     }
 }
 
