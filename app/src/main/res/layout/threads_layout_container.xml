@@ -20,20 +20,17 @@
         android:id="@+id/threads_layout_containe_inner">
 
         <android.support.v4.widget.SwipeRefreshLayout
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:tools="http://schemas.android.com/tools"
             android:id="@+id/refresh"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <ListView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/threads_listview" />
 
         </android.support.v4.widget.SwipeRefreshLayout>
 
-        <ListView
-            android:layout_width="match_parent"
-            android:id="@+id/threads_listview"
-            android:layout_height="wrap_content"
-            android:clickable="false" />
 
     </FrameLayout>
 

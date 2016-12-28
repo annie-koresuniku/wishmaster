@@ -59,4 +59,5 @@ dependencies {
         exclude module: 'httpclient'
     }
     compile 'org.apache.httpcomponents:httpclient-android:4.3.5'
+    compile 'com.android.support:recyclerview-v7:21.0.+'
 }

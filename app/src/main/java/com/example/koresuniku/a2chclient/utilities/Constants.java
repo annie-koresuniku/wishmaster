@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
+import android.view.View;
 
 import com.example.koresuniku.a2chclient.R;
 import com.example.koresuniku.a2chclient.boards_database.BoardsContract;
@@ -13,7 +14,9 @@ import com.example.koresuniku.a2chclient.boards_database.BoardsContract;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class Constants {
     public static final String MAIN_TEXT_FIRST = "Два.ч - это система форумов, где можно общаться быстро и свободно, где любая точка зрения имеет право на жизнь.\n" +
@@ -79,11 +82,17 @@ public class Constants {
 
     public static File DIRECTORY = null;
 
+    public static ArrayList<String> JSON_PAGES = new ArrayList<>();
+    public static int THREADS_ITEMS_LOADED = 0;
+
+    public static Map<String, View> COLLAPSED_THREADS = new HashMap<>();
+    public static Map<String, Integer> COLLAPSED_THREADS_POSITIONS = new HashMap<>();
+    //public static Map<String, View> COLLAPSED_THREADS_SHORT = new HashMap<>();
+
+
     public static Map<Integer, Boolean> SPOILER_POSTS_COUNTER;
-    public static Map<Integer, ArrayList<String>> SPOILERS_LOCALIZATIONS = new HashMap<>();
-    public static Map<Integer, ArrayList<String>> SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY = new HashMap<>();
-    public static Map<Integer, ArrayList<String>> LINKS_LOCALIZATIONS = new HashMap<>();
-    public static Map<Integer, ArrayList<String>> LINKS_LOCALIZATIONS_TO_GO = new HashMap<>();
+    public static Map<Integer, ArrayList<String>> SPOILERS_LOCATIONS = new HashMap<>();
+    public static Map<Integer, ArrayList<String>> SPOILERS_LOCATIONS_FOR_THREADS_ACTIVITY = new HashMap<>();
     public static Map<Integer, Integer> HIDDEN_STATE = new HashMap<>();
     public static int ANSWER_NUMBER_OPENED = -1;
 

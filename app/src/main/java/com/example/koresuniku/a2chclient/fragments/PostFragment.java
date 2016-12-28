@@ -108,10 +108,11 @@ public class PostFragment extends android.support.v4.app.Fragment {
         Constants.POSTING_FRAGMENT_IS_OPENED = true;
     }
 
-    public PostFragment(Context context, boolean newThread, ThreadsActivity threadsActivity) {
+    public PostFragment(Context context, boolean newThread, ThreadsActivity threadsActivity, String answer) {
         createNewThread = newThread;
         mContext = context;
         mThreadsActivity = threadsActivity;
+        mAnswer = answer;
     }
 
     @Override

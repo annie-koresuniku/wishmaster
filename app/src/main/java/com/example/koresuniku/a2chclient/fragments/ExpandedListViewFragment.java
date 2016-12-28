@@ -322,6 +322,7 @@ public class ExpandedListViewFragment extends Fragment {
                 dbManager.close();
 
                 Intent intent = new Intent(getActivity(), ThreadsActivity.class);
+                Log.i("id ", id);
                 intent.putExtra(Constants.BOARD, id);
                 intent.putExtra(Constants.PAGE, "0");
 

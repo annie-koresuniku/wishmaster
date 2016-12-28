@@ -24,4 +24,5 @@
     <string name="files_text">Файлы</string>
     <string name="captcha_text">Капча</string>
     <string name="spinner_text">опции</string>
+    <string name="collapsed_thread_text">Скрытый тред</string>
 </resources>

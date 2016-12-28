@@ -106,6 +106,8 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.example.koresuniku.a2chclient.utilities.CacheReduce.trimCache;
+
 public class SingleThreadActivity extends AppCompatActivity {
     private final static String LOG_TAG = SingleThreadActivity.class.getSimpleName();
     private static final int PICKFILE_RESULT_CODE = 1;
@@ -603,7 +605,7 @@ public class SingleThreadActivity extends AppCompatActivity {
     }
 
     public void onBackPressed() {
-        Constants.SPOILERS_LOCALIZATIONS = new HashMap<>();
+        Constants.SPOILERS_LOCATIONS = new HashMap<>();
 
         if (needToCloseMediaViewer) {
             Log.i(LOG_TAG, "Inside onBackPressed() needToCloseMediaViewer");
@@ -1110,7 +1112,7 @@ public class SingleThreadActivity extends AppCompatActivity {
         }
 
         private SpannableString setSpoilerSpans(int position, SpannableString ss) {
-            ArrayList<String> spoilersArray = Constants.SPOILERS_LOCALIZATIONS.get(position);
+            ArrayList<String> spoilersArray = Constants.SPOILERS_LOCATIONS.get(position);
             if (spoilersArray != null) {
                 for (String spoiler : spoilersArray) {
                     String[] locals = spoiler.split(" ");
@@ -1133,6 +1135,7 @@ public class SingleThreadActivity extends AppCompatActivity {
         @Override
         public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
             if (!isScrolled) {
+                Log.i(LOG_TAG, "iscrolled ");
                 threadItems = copyOfThreadItems;
                 adapter.notifyDataSetChanged();
             }
@@ -1429,28 +1432,6 @@ public class SingleThreadActivity extends AppCompatActivity {
 
                 int start = 0;
                 for (String spoiler : spoilers) {
-//                        Pattern pattern = Pattern.compile(spoiler
-//                                .replace(")", "\\)")
-//                                .replace("(", "\\(")
-//                                .replace("+", "\\+")
-//                                .replace("&", "\\&")
-//                                .replace("\\", "")
-//                                .replace("{", "\\{")
-//                                .replace("}", "\\}")
-//                        .replace("))", "\\)\\)")
-//                        .replace("((", "\\(\\(")
-//                        .replace("+15", "\\+\\1\\5"));
-//
-//                        Matcher matcher = pattern.matcher(formattedTextGeneral.get(position));
-//                        int startAt = 0;
-//                        while (matcher.find(startAt)) {
-//                            Log.i(LOG_TAG, "mathced groups" + matcher.groupCount());
-//                            int start = matcher.start();
-//                            int end = matcher.end();
-//                            Log.i(LOG_TAG, "start " + start + ", end " + end);
-//                            spoilersLocalizations.add(start + " " + end);
-//                            startAt = end;
-//                        }
                     int loopCounter = 0;
                     for (int i = start; i < commentFormatted.length() - spoiler.length() + 1; i++) {
                         //Log.i(LOG_TAG, "search spoiler " + commentFormatted.substring(i, i + spoiler.length()));
@@ -1467,11 +1448,11 @@ public class SingleThreadActivity extends AppCompatActivity {
                         }
                     }
                 }
-                if (Constants.SPOILERS_LOCALIZATIONS.get(position) == null) {
-                    Constants.SPOILERS_LOCALIZATIONS.put(position, spoilersLocations);
+                if (Constants.SPOILERS_LOCATIONS.get(position) == null) {
+                    Constants.SPOILERS_LOCATIONS.put(position, spoilersLocations);
                 }
-                if (Constants.SPOILERS_LOCALIZATIONS.get(position).size() == 0) {
-                    Constants.SPOILERS_LOCALIZATIONS.put(position, spoilersLocations);
+                if (Constants.SPOILERS_LOCATIONS.get(position).size() == 0) {
+                    Constants.SPOILERS_LOCATIONS.put(position, spoilersLocations);
                 }
             }
         }
@@ -1479,7 +1460,7 @@ public class SingleThreadActivity extends AppCompatActivity {
             @Override
         protected void onPostExecute(Void aVoid) {
             makeAnswersGeneral();
-                Log.i(LOG_TAG, "FINAL SPOILERS " + Constants.SPOILERS_LOCALIZATIONS);
+                Log.i(LOG_TAG, "FINAL SPOILERS " + Constants.SPOILERS_LOCATIONS);
 
             copyOfThreadItems = threadItems;
             //Log.i(LOG_TAG, "Before for");
@@ -2048,30 +2029,5 @@ public class SingleThreadActivity extends AppCompatActivity {
         }
     }
 
-    public static void trimCache(Context context) {
-        try {
-            File dir = context.getCacheDir();
-            if (dir != null && dir.isDirectory()) {
-                deleteDirTrim(dir);
-            }
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-    }
-
-    public static boolean deleteDirTrim(File dir) {
-        if (dir != null && dir.isDirectory()) {
-            String[] children = dir.list();
-            for (int i = 0; i < children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
-                if (!success) {
-                    return false;
-                }
-            }
-        }
-
-        // The directory is now empty so delete it
-        return dir.delete();
-    }
 }
 

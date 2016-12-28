@@ -3,17 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item android:title="Item"
-        android:icon="@drawable/left"
-        app:showAsAction="always"
-        android:id="@+id/back_item" />
-    <item android:title="index"
-        app:showAsAction="always"
-        android:id="@+id/page_index" />
-    <item android:title="Item"
-        android:icon="@drawable/right"
-        app:showAsAction="always"
-        android:id="@+id/forward_item" />
-    <item android:title="Item"
         android:id="@+id/action_attach"
         android:icon="@drawable/ic_attach_file_white_48dp"
         app:showAsAction="always"

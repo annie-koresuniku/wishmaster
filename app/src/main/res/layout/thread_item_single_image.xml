@@ -13,12 +13,26 @@
         android:layout_marginBottom="6dp"
         android:layout_marginTop="6dp">
 
-        <TextView
-            android:text="TextView"
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/thread_item_header"
-            android:layout_marginBottom="6dp" />
+            android:layout_height="match_parent"
+            android:layout_marginBottom="2dp">
+
+            <TextView
+                android:text="TextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/thread_item_header"
+                android:layout_gravity="left|center"
+                android:gravity="left|center" />
+
+            <ImageView
+                android:layout_width="60dp"
+                android:layout_height="30dp"
+                app:srcCompat="@drawable/ic_expand_more_black_48dp"
+                android:id="@+id/expand_options" />
+        </LinearLayout>
 
         <LinearLayout
             android:orientation="horizontal"
@@ -41,7 +55,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         app:srcCompat="@android:drawable/ic_menu_report_image"
-                        android:id="@+id/thread_item_image" />
+                        android:id="@+id/thread_item_image"
+                        android:layout_gravity="center" />
 
                     <ImageView
                         app:srcCompat="@drawable/webm2_fixed"
@@ -51,15 +66,21 @@
                         android:layout_width="80dp" />
                 </FrameLayout>
 
-                <TextView
-                    android:text="TextView"
+                <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:id="@+id/short_info_view"
-                    android:textSize="11sp"
-                    android:layout_marginTop="2dp"
-                    android:layout_gravity="top"
-                    android:lines="3" />
+                    android:layout_height="match_parent">
+
+                    <TextView
+                        android:text="TextView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/short_info_view"
+                        android:textSize="11sp"
+                        android:layout_gravity="top"
+                        android:maxLines="3"
+                        android:lines="3" />
+                </FrameLayout>
+
             </LinearLayout>
 
             <LinearLayout
@@ -79,8 +100,7 @@
                     style="@android:style/Widget.DeviceDefault.Light.TextView"
                     android:textAppearance="@style/TextAppearance.AppCompat"
                     android:textColor="@color/text_custom"
-                    android:maxLines="8"
-                    android:lines="8" />
+                    android:maxLines="8" />
 
                 <Space
                     android:layout_width="match_parent"
@@ -89,7 +109,7 @@
                 <TextView
                     android:text="TextView"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:id="@+id/thread_item_answers_and_files"
                     android:gravity="bottom"
                     android:textSize="12sp" />

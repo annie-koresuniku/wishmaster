@@ -49,7 +49,7 @@ public class CommentTagHandler implements Html.TagHandler {
             mPosition = SingleThreadActivity.formattedTextsGeneral.indexOf(editable.toString());
             //Log.i(LOG_TAG, "received position " + mPosition);
 
-            ArrayList<String> spoilers = Constants.SPOILERS_LOCALIZATIONS.get(mPosition);
+            ArrayList<String> spoilers = Constants.SPOILERS_LOCATIONS.get(mPosition);
 
             if (spoilers == null) return;
             //Log.i(LOG_TAG, "BEFORE SETTING SPAN 1");
@@ -68,9 +68,9 @@ public class CommentTagHandler implements Html.TagHandler {
 
         } else {
             mPosition = ThreadsActivity.formattedTextsGeneral.indexOf(editable.toString());
-            Log.i(LOG_TAG, "received position " + mPosition);
+            //Log.i(LOG_TAG, "received position " + mPosition);
 
-            ArrayList<String> spoilers = Constants.SPOILERS_LOCALIZATIONS_FOR_THREADS_ACTIVITY.get(mPosition);
+            ArrayList<String> spoilers = Constants.SPOILERS_LOCATIONS_FOR_THREADS_ACTIVITY.get(mPosition);
 
             if (spoilers == null) return;
             //Log.i(LOG_TAG, "BEFORE SETTING SPAN 1");

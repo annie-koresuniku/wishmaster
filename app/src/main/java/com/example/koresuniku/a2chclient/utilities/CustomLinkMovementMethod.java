@@ -35,7 +35,7 @@ import static com.example.koresuniku.a2chclient.activities.SingleThreadActivity.
 import static com.example.koresuniku.a2chclient.activities.SingleThreadActivity.unformattedTextGeneral;
 import static com.example.koresuniku.a2chclient.utilities.Constants.ANSWER_NUMBER_OPENED;
 import static com.example.koresuniku.a2chclient.utilities.Constants.SIZE;
-import static com.example.koresuniku.a2chclient.utilities.Constants.SPOILERS_LOCALIZATIONS;
+import static com.example.koresuniku.a2chclient.utilities.Constants.SPOILERS_LOCATIONS;
 
 public class CustomLinkMovementMethod extends LinkMovementMethod {
     private static final String LOG_TAG = CustomLinkMovementMethod.class.getSimpleName();
@@ -406,8 +406,8 @@ public class CustomLinkMovementMethod extends LinkMovementMethod {
                         Log.i(LOG_TAG, "position " + position);
                     }
 
-                    if (Constants.SPOILERS_LOCALIZATIONS.get(position) == null) break;
-                    ArrayList<String> spanLocals = SPOILERS_LOCALIZATIONS.get(position);
+                    if (Constants.SPOILERS_LOCATIONS.get(position) == null) break;
+                    ArrayList<String> spanLocals = SPOILERS_LOCATIONS.get(position);
                     //Log.i(LOG_TAG, "spanLocals " + spanLocals);
                     for (String singleSpoilerLocalization : spanLocals) {
                         //Log.i(LOG_TAG, "Inside single " + singleSpoilerLocalization);
