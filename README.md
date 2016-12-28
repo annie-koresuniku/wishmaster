@@ -1,7 +1,7 @@
 # wishmaster
 2ch.hk imageboard client for android
 
-Download current version: https://github.com/annie-koresuniku/Wishmaster/releases/download/1.0.1/wishmaster.apk
+Download current version: https://github.com/annie-koresuniku/Wishmaster/releases/download/v1.0.2/wishmaster.apk
 
 ### Main fuctionality
 
