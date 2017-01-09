@@ -1,4 +1,4 @@
-package com.example.koresuniku.a2chclient;
+package com.example.koresuniku.wishmaster;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

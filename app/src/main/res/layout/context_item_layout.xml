@@ -5,14 +5,14 @@
     android:layout_height="wrap_content"
     android:id="@+id/context_item">
 
-    <com.example.koresuniku.a2chclient.utilities.SimpleExoPlayerView
+    <com.example.koresuniku.wishmaster.utilities.SimpleExoPlayerView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/simpleExoPlayerView"
         android:layout_gravity="center"
         android:visibility="gone" />
 
-    <com.example.koresuniku.a2chclient.utilities.TouchImageView
+    <com.example.koresuniku.wishmaster.utilities.TouchImageView
         android:id="@+id/imageViews"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

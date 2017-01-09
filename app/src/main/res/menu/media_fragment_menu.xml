@@ -7,10 +7,6 @@
         android:id="@+id/action_write"
         android:icon="@drawable/ic_create_white_48dp" />
     <item android:title="Item"
-        android:icon="@drawable/refresh_action"
-        android:id="@+id/action_refresh"
-        app:showAsAction="always" />
-    <item android:title="Item"
         app:showAsAction="always"
         android:icon="@drawable/ic_save_white_48dp"
         android:id="@+id/action_save" />
@@ -26,8 +22,4 @@
         app:showAsAction="always"
         android:icon="@drawable/ic_close_white_48dp"
         android:id="@+id/action_close" />
-    <item android:title="Item"
-        android:id="@+id/action_refresh_single"
-        app:showAsAction="always"
-        android:icon="@drawable/refresh_action" />
 </menu>

@@ -1,4 +1,4 @@
-package com.example.koresuniku.a2chclient;
+package com.example.koresuniku.wishmaster;
 
 import org.junit.Test;
 

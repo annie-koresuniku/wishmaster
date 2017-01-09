@@ -17,13 +17,19 @@
         android:layout_height="match_parent"
         android:id="@+id/threads_layout_containe_inner">
 
+        <com.koresuniku.wishmaster.utilities.SwipeRefreshLayoutBottom
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/srlb">
             <ListView
                 android:layout_width="match_parent"
                 android:id="@+id/threads_listview"
                 android:layout_height="wrap_content"
                 android:clickable="false" />
+        </com.koresuniku.wishmaster.utilities.SwipeRefreshLayoutBottom>
 
-            <FrameLayout
+
+        <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:id="@+id/tint_view"
@@ -32,30 +38,18 @@
 
             </FrameLayout>
 
-            <ScrollView
+        <ScrollView
                 android:layout_width="match_parent"
                 android:id="@+id/scroll_item_context"
                 android:layout_gravity="center"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="12dp"
-                android:layout_marginRight="12dp"
-                android:layout_marginTop="12dp"
-                android:layout_marginBottom="12dp">
+            android:visibility="visible"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp">
 
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <FrameLayout
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center"
-                        android:id="@+id/context_item"
-                        android:foregroundGravity="center"
-                        android:layout_width="match_parent">
-
-                    </FrameLayout>
-                </RelativeLayout>
-            </ScrollView>
+        </ScrollView>
 
 
     </FrameLayout>
