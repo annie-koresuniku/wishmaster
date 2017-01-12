@@ -61,4 +61,5 @@ dependencies {
     }
     compile 'org.apache.httpcomponents:httpclient-android:4.3.5'
     compile 'com.android.support:recyclerview-v7:21.0.+'
+    compile 'com.github.ksoichiro:android-observablescrollview:1.5.0'
 }

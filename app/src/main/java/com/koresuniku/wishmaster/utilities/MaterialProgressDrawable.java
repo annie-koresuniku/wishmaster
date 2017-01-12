@@ -1,4 +1,4 @@
-package com.example.koresuniku.wishmaster.utilities;
+package com.koresuniku.wishmaster.utilities;
 
 /*
  * Copyright (C) 2014 The Android Open Source Project

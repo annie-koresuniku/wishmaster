@@ -21,11 +21,16 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id="@+id/srlb">
-            <ListView
+            <com.github.ksoichiro.android.observablescrollview.ObservableListView
                 android:layout_width="match_parent"
-                android:id="@+id/threads_listview"
-                android:layout_height="wrap_content"
+                android:id="@+id/lv"
+                android:layout_height="match_parent"
                 android:clickable="false" />
+            <!--<ListView-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:id="@+id/lv"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:clickable="false" />-->
         </com.koresuniku.wishmaster.utilities.SwipeRefreshLayoutBottom>
 
 
