@@ -5,7 +5,7 @@
     <item android:title="Item"
         app:showAsAction="always"
         android:id="@+id/action_write"
-        android:icon="@drawable/ic_create_white_48dp" />
+        android:icon="@drawable/ic_insert_comment_white_48dp" />
     <item android:title="Item"
         app:showAsAction="always"
         android:icon="@drawable/ic_save_white_48dp"
