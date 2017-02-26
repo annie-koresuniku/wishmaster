@@ -182,6 +182,7 @@ public class MainActivity extends AppCompatActivity {
                     imm.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
                 } else {
                     Intent intent = new Intent(getApplication(), ThreadsActivity.class);
+
                     intent.putExtra(Constants.BOARD, query);
                     intent.putExtra(Constants.PAGE, "0");
                     startActivity(intent);

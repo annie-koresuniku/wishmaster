@@ -50,7 +50,7 @@ public class CommonMakabaMarkupHandle {
                 }
             }
         }
-        Log.i(LOG_TAG, "spoilers " + spoilers);
+        //Log.i(LOG_TAG, "spoilers " + spoilers);
         if (spoilers.size() > 0) {
             String commentFormatted = "";
             if (activity instanceof ThreadsActivity) {

@@ -37,6 +37,7 @@ import com.squareup.picasso.Picasso;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -742,7 +743,7 @@ public class ThreadsActivityAsynktasks {
         @Override
         protected void onPostExecute(Void aVoid) {
             Log.i(LOG_TAG, "Views have been created");
-            Log.i(LOG_TAG, "Paths " + activity.pathsToMediaFiles);
+            //Log.i(LOG_TAG, "Paths " + activity.pathsToMediaFiles);
             if (activity.chosenPage == 0) {
                 activity.mThreadsListView.setAdapter(activity.adapter);
                 activity.pb = new ProgressBar(activity.thisActivity, null, android.R.attr.progressBarStyle);
@@ -763,24 +764,31 @@ public class ThreadsActivityAsynktasks {
                 activity.pb.setOnClickListener(null);
                 activity.mThreadsListView.addFooterView(activity.pb);
                 View headerBarFake = activity.getLayoutInflater().inflate(R.layout.banner_header_view, null);
-                ImageView bannerImageView = (ImageView) headerBarFake.findViewById(R.id.banner_image_view);
-                Glide
-                        .with(activity)
-                        .load(Constants.DVACH_AUTHORITY + activity.banner[0])
-                        .into(bannerImageView);
-                bannerImageView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        ThreadsActivity ta = new ThreadsActivity();
-                        Intent intent = new Intent(activity, ta.getClass());
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                        intent.putExtra(Constants.BOARD, activity.banner[1]);
-                        intent.putExtra(Constants.PAGE, "0");
-                        activity.startActivity(intent);
-                    }
-                });
+                TextView boardNameTextView = (TextView) headerBarFake.findViewById(R.id.board_name_textview);
+                boardNameTextView.setText("/" + activity.intentBoard + "/ - " + activity.boardName);
+//                ImageView bannerImageView = (ImageView) headerBarFake.findViewById(R.id.banner_image_view);
+//                Glide
+//                        .with(activity)
+//                        .load(Constants.DVACH_AUTHORITY + activity.banner[0])
+//                        .into(bannerImageView);
+//                bannerImageView.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View view) {
+//                        Intent intent = new Intent(activity, ThreadsActivity.class);
+//                        //intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                        intent.putExtra(Constants.BOARD, activity.banner[1]);
+//                        intent.putExtra(Constants.PAGE, "0");
+//
+//                        activity.startActivity(intent);
+//                        activity.itemViews = new ArrayList<View>();
+//                        activity = null;
+//                        System.gc();
+//
+//                    }
+//                });
                 headerBarFake.setLayoutParams(new ViewGroup.LayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 160)));
                 //bannerImageView.setImageResource(R.drawable.l1);
+
                 activity.mThreadsListView.addHeaderView(headerBarFake);
 
 

@@ -54,7 +54,7 @@ public class CommentLinkMovementMethod extends LinkMovementMethod {
             } else if (lines[i].substring(0, 1).equals(">") && !(lines[i].substring(1, 2).equals(">"))) {
                 //Log.i(LOG_TAG, "Line bigger than 2");
                 //Log.i(LOG_TAG, "Line as it " + lines[i]);
-                Log.i(LOG_TAG, "GOT QUOTE");
+                //Log.i(LOG_TAG, "GOT QUOTE");
                 int localEnd = start + lines[i].length();
                 //Log.i(LOG_TAG, "Start " + start);
                 //Log.i(LOG_TAG, "End " + end);
@@ -79,7 +79,7 @@ public class CommentLinkMovementMethod extends LinkMovementMethod {
                 String[] locals = spoiler.split(" ");
                 int start = Integer.parseInt(locals[0]);
                 int end = Integer.parseInt(locals[1]);
-                Log.i(LOG_TAG, "BEFORE SETTING SPAN " + start + " " + end);
+                //Log.i(LOG_TAG, "BEFORE SETTING SPAN " + start + " " + end);
                 text.setSpan(new BackgroundColorSpan(Color.parseColor("#b4b4b4")),
                         start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                 text.setSpan(new ForegroundColorSpan(Color.parseColor("#00ffffff")),
@@ -87,7 +87,7 @@ public class CommentLinkMovementMethod extends LinkMovementMethod {
 
             }
         } else {
-            Log.i(LOG_TAG, "spoilersArray IS NULL");
+            //Log.i(LOG_TAG, "spoilersArray IS NULL");
         }
         return text;
     }
