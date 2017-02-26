@@ -66,7 +66,7 @@ public class CommentTagHandler implements Html.TagHandler {
             }
 
         } else {
-            mPosition = ThreadsActivity.formattedTextsGeneral.indexOf(editable.toString());
+//            mPosition = ThreadsActivity.formattedTextsGeneral.indexOf(editable.toString());
             //Log.i(LOG_TAG, "received position " + mPosition);
 
             ArrayList<String> spoilers = Constants.SPOILERS_LOCATIONS_FOR_THREADS_ACTIVITY.get(mPosition);

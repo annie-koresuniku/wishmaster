@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#ff7000</color>
-    <color name="colorPrimaryDark">#ce5703</color>
+    <color name="colorPrimaryDark">#ff7000</color>
     <color name="colorAccent">#FF7000</color>
     <color name="background_color_custom">#f9f5f5f5</color>
     <color name="canva_color_custom">#fcfcfc</color>
@@ -13,4 +13,5 @@
     <color name="text_custom">#3b3b3b</color>
     <color name="button_back_full">#dddddd</color>
     <color name="spoiler_span">#b4b4b4</color>
+    <color name="expandable_listview_board_state_pressed_color">#10000000</color>
 </resources>

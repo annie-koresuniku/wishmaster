@@ -1,0 +1,71 @@
+JvmtiExport can_access_local_variables 0
+JvmtiExport can_hotswap_or_post_breakpoint 0
+JvmtiExport can_post_on_exceptions 0
+# 386 ciObject found
+ciMethod java/lang/Object <init> ()V 4097 1 10900213 0 0
+ciMethod java/lang/Object hashCode ()I 2049 1 256 0 -1
+ciMethod java/lang/Object equals (Ljava/lang/Object;)Z 1409 1 34606 0 -1
+ciMethod java/lang/Object toString ()Ljava/lang/String; 1 1 2014 0 -1
+ciMethod java/lang/Comparable compareTo (Ljava/lang/Object;)I 0 0 1 0 -1
+ciMethod java/lang/String <init> ([CII)V 2153 1 6475 0 608
+ciMethod java/lang/String length ()I 3073 1 1520913 0 0
+ciMethod java/lang/String charAt (I)C 4097 1 6015729 0 128
+ciMethod java/lang/String compareTo (Ljava/lang/String;)I 2049 9873 4355 0 -1
+ciMethod java/lang/String indexOf (Ljava/lang/String;)I 2049 1 28961 0 -1
+ciMethod java/lang/String format (Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String; 161 1 9032 0 0
+ciMethod java/lang/System currentTimeMillis ()J 3073 1 384 0 -1
+ciMethod java/lang/System arraycopy (Ljava/lang/Object;ILjava/lang/Object;II)V 5121 1 640 0 -1
+ciMethod java/lang/ref/Reference get ()Ljava/lang/Object; 2057 1 257 0 -1
+ciMethod java/lang/ref/SoftReference get ()Ljava/lang/Object; 3073 1 101640 0 96
+ciMethod java/lang/AbstractStringBuilder <init> (I)V 689 1 434123 0 224
+ciMethod java/lang/AbstractStringBuilder append (C)Ljava/lang/AbstractStringBuilder; 2353 1 1241144 0 -1
+ciMethod java/lang/StringBuilder <init> ()V 593 1 311039 0 192
+ciMethod java/lang/StringBuilder <init> (Ljava/lang/String;)V 3081 1 20063 0 0
+ciMethod java/lang/StringBuilder append (Ljava/lang/String;)Ljava/lang/StringBuilder; 1145 1 837601 0 -1
+ciMethod java/lang/StringBuilder append (C)Ljava/lang/StringBuilder; 4073 1 611792 0 704
+ciMethod java/lang/StringBuilder append (I)Ljava/lang/StringBuilder; 1 1 21139 0 -1
+ciMethod java/lang/StringBuilder toString ()Ljava/lang/String; 617 1 316376 0 704
+ciMethod java/lang/Number <init> ()V 3489 1 91052 0 32
+ciMethod java/lang/Integer valueOf (I)Ljava/lang/Integer; 2569 1 124695 0 192
+ciMethod java/lang/Integer <init> (I)V 8017 1 64329 0 0
+ciMethod java/util/Comparator compare (Ljava/lang/Object;Ljava/lang/Object;)I 0 0 1 0 -1
+ciMethod java/security/AccessController doPrivileged (Ljava/security/PrivilegedAction;)Ljava/lang/Object; 2049 1 256 0 -1
+ciMethod java/util/List iterator ()Ljava/util/Iterator; 0 0 1 0 -1
+ciMethod java/lang/ref/ReferenceQueue poll ()Ljava/lang/ref/Reference; 2049 1 28113 0 -1
+ciMethod java/lang/Math min (II)I 3793 1 532399 0 -1
+ciMethod java/util/Arrays copyOfRange ([CII)[C 2113 1 5429 0 512
+ciMethod java/util/Iterator hasNext ()Z 0 0 1 0 -1
+ciMethod java/util/Iterator next ()Ljava/lang/Object; 0 0 1 0 -1
+ciMethod sun/security/action/GetPropertyAction <init> (Ljava/lang/String;Ljava/lang/String;)V 97 1 19 0 -1
+ciMethod java/lang/Enum ordinal ()I 1097 1 137 0 0
+ciMethodData java/lang/Object <init> ()V 2 10900214 orig 264 136 112 12 96 0 0 0 0 136 4 16 22 0 0 0 0 32 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 77 68 79 32 101 120 116 114 97 32 100 97 116 97 32 108 111 99 107 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 0 0 177 135 50 5 1 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 3 0 1 0 0 0 0 0 0 0 255 255 255 255 0 0 0 0 0 0 0 0 data 0 oops 0
+ciMethodData java/lang/String charAt (I)C 2 6015729 orig 264 136 112 12 96 0 0 0 0 56 61 16 22 0 0 0 0 120 1 0 0 32 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 77 68 79 32 101 120 116 114 97 32 100 97 116 97 32 108 111 99 107 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 25 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2 0 0 137 71 222 2 1 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 8 0 2 0 0 0 80 0 0 0 255 255 255 255 7 0 1 0 0 0 0 0 data 10 0x10007 0x0 0x40 0x5bc8f2 0xa0007 0x5bc92e 0x30 0x0 0x120002 0x0 oops 0
+ciMethod java/util/Locale getInstance (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lsun/util/locale/LocaleExtensions;)Ljava/util/Locale; 49 1 6 0 -1
+ciMethod java/util/Locale getDefault ()Ljava/util/Locale; 2593 1 35317 0 0
+ciMethod java/util/Locale getDefault (Ljava/util/Locale$Category;)Ljava/util/Locale; 1321 1 7646 0 1024
+ciMethod java/util/Locale initDefault (Ljava/util/Locale$Category;)Ljava/util/Locale; 9 1 1 0 0
+ciMethod java/util/Locale getLanguage ()Ljava/lang/String; 409 1 1536 0 -1
+ciMethod java/util/Locale getScript ()Ljava/lang/String; 289 1 36 0 -1
+ciMethod java/util/Locale getCountry ()Ljava/lang/String; 13177 1 23831 0 0
+ciMethod java/util/Locale getVariant ()Ljava/lang/String; 233 1 41 0 -1
+ciMethod java/util/Locale getUnicodeLocaleType (Ljava/lang/String;)Ljava/lang/String; 1217 1 5276 0 -1
+ciMethod java/util/Locale equals (Ljava/lang/Object;)Z 353 1 6189 0 256
+ciMethod java/util/concurrent/ConcurrentMap putIfAbsent (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; 0 0 1 0 -1
+ciMethod java/util/concurrent/ConcurrentMap remove (Ljava/lang/Object;)Ljava/lang/Object; 0 0 1 0 -1
+ciMethod java/util/concurrent/ConcurrentMap get (Ljava/lang/Object;)Ljava/lang/Object; 0 0 1 0 -1
+ciMethod java/util/concurrent/ConcurrentMap put (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object; 0 0 1 0 -1
+ciMethod java/util/concurrent/ConcurrentHashMap spread (I)I 2249 1 654784 0 -1
+ciMethod java/util/concurrent/ConcurrentHashMap tabAt ([Ljava/util/concurrent/ConcurrentHashMap$Node;I)Ljava/util/concurrent/ConcurrentHashMap$Node; 2113 1 2735257 0 -1
+ciMethod java/util/concurrent/ConcurrentHashMap <init> ()V 313 1 129 0 -1
+ciMethod java/util/concurrent/ConcurrentHashMap get (Ljava/lang/Object;)Ljava/lang/Object; 213945 41841 46281 0 672
+ciMethod java/util/concurrent/ConcurrentHashMap$Node find (ILjava/lang/Object;)Ljava/util/concurrent/ConcurrentHashMap$Node; 0 0 1 0 -1
+ciMethod sun/util/locale/BaseLocale getRegion ()Ljava/lang/String; 1097 1 137 0 0
+ciMethod sun/util/locale/BaseLocale equals (Ljava/lang/Object;)Z 3313 1 5535 0 160
+ciMethodData java/lang/String length ()I 2 1520913 orig 264 136 112 12 96 0 0 0 0 232 59 16 22 0 0 0 0 32 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 77 68 79 32 101 120 116 114 97 32 100 97 116 97 32 108 111 99 107 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 128 1 0 0 137 156 185 0 1 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 3 0 1 0 0 0 0 0 0 0 255 255 255 255 0 0 0 0 0 0 0 0 data 0 oops 0
+ciMethodData java/util/Arrays copyOfRange ([CII)[C 2 5429 orig 264 136 112 12 96 0 0 0 0 56 65 33 22 0 0 0 0 120 2 0 0 240 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 77 68 79 32 101 120 116 114 97 32 100 97 116 97 32 108 111 99 107 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 29 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 8 1 0 0 105 161 0 0 1 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 9 0 2 0 0 0 32 1 0 0 255 255 255 255 7 0 5 0 0 0 0 0 data 36 0x50007 0x142d 0x100 0x0 0x100002 0x0 0x140005 0x0 0x0 0x0 0x0 0x0 0x190005 0x0 0x0 0x0 0x0 0x0 0x1d0005 0x0 0x0 0x0 0x0 0x0 0x200005 0x0 0x0 0x0 0x0 0x0 0x230002 0x0 0x360002 0x142d 0x390002 0x142d oops 0
+ciMethodData java/lang/StringBuilder <init> ()V 2 311039 orig 264 136 112 12 96 0 0 0 0 160 112 23 22 0 0 0 0 48 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 77 68 79 32 101 120 116 114 97 32 100 97 116 97 32 108 111 99 107 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 74 0 0 0 169 245 37 0 1 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 3 0 2 0 0 0 16 0 0 0 255 255 255 255 2 0 3 0 0 0 0 0 data 2 0x30002 0x4beb6 oops 0
+ciMethodData java/lang/AbstractStringBuilder <init> (I)V 2 434123 orig 264 136 112 12 96 0 0 0 0 136 52 23 22 0 0 0 0 56 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 77 68 79 32 101 120 116 114 97 32 100 97 116 97 32 108 111 99 107 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 86 0 0 0 169 251 52 0 1 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 3 0 2 0 0 0 16 0 0 0 255 255 255 255 2 0 1 0 0 0 0 0 data 2 0x10002 0x69f75 oops 0
+ciMethodData java/lang/StringBuilder toString ()Ljava/lang/String; 2 316376 orig 264 136 112 12 96 0 0 0 0 104 135 23 22 0 0 0 0 48 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 77 68 79 32 101 120 116 114 97 32 100 97 116 97 32 108 111 99 107 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 29 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 77 0 0 0 89 156 38 0 1 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 3 0 2 0 0 0 16 0 0 0 255 255 255 255 2 0 13 0 0 0 0 0 data 2 0xd0002 0x4d38b oops 0
+ciMethodData java/lang/String <init> ([CII)V 2 6475 orig 264 136 112 12 96 0 0 0 0 64 49 16 22 0 0 0 0 16 2 0 0 144 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 77 68 79 32 101 120 116 114 97 32 100 97 116 97 32 108 111 99 107 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 25 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 9 1 0 0 241 193 0 0 1 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 9 0 2 0 0 0 176 0 0 0 255 255 255 255 2 0 1 0 0 0 0 0 data 22 0x10002 0x183e 0x50007 0x183e 0x30 0x0 0xd0002 0x0 0x120007 0x183e 0x30 0x0 0x1a0002 0x0 0x230007 0x183e 0x30 0x0 0x2d0002 0x0 0x370002 0x183e oops 0
+ciMethodData java/lang/StringBuilder append (C)Ljava/lang/StringBuilder; 2 611792 orig 264 136 112 12 96 0 0 0 0 224 119 23 22 0 0 0 0 56 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 77 68 79 32 101 120 116 114 97 32 100 97 116 97 32 108 111 99 107 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 19 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 253 1 0 0 153 158 74 0 1 0 0 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 8 0 2 0 0 0 16 0 0 0 255 255 255 255 2 0 2 0 0 0 0 0 data 2 0x20002 0x953d3 oops 0
+ciMethodData java/util/TreeMap get (Ljava/lang/Object;)Ljava/lang/Object; 2 243434 orig 264 136 112 12 96 0 0 0 0 72 133 140 22 0 0 0 0 184 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 77 68 79 32 101 120 116 114 97 32 100 97 116 97 32 108 111 99 107 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 17 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 23 1 0 0 153 174 29 0 1 0 0 0 225 52 0 0 0 0 0 0 2 0 0 0 0 0 6 0 2 0 0 0 104 0 0 0 255 255 255 255 5 0 2 0 0 0 0 0 data 13 0x20005 0x90 0x1e5050e0 0x3b54e 0x0 0x0 0x70007 0x36125 0x38 0x54c0 0xb0003 0x54c0 0x18 oops 1

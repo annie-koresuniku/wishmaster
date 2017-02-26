@@ -13,11 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Constants {
-    public static final String MAIN_TEXT_FIRST = "Два.ч - это система форумов, где можно общаться быстро и свободно, где любая точка зрения имеет право на жизнь.\n" +
-            "        Здесь нет регистрации и подписываться не нужно, хотя это не избавляет вас от необходимости соблюдать правила.\n" +
-            "        Все форумы (кроме ";
-    public static final String MAIN_TEXT_SECOND = "реда), а их список находится снизу, имеют собственную чётко ограниченную тематику.\n" +
-            "        Словом, всё, что не запрещено правилами отдельно взятого форума и относится к его тематике, на этом форуме разрешено. ";
+    public static final String DVACH_AUTHORITY = "https://2ch.hk/";
 
     public static final String[] SUBJECTS = {
             BoardsContract.BoardsEntry.ADULT_STRING,
@@ -77,7 +73,7 @@ public class Constants {
     public static File DIRECTORY = null;
 
     public static ArrayList<String> JSON_PAGES = new ArrayList<>();
-    public static int THREADS_ITEMS_LOADED = 0;
+    //public static int THREADS_ITEMS_LOADED = 0;
 
     public static Map<String, View> COLLAPSED_THREADS = new HashMap<>();
     public static Map<String, Integer> COLLAPSED_THREADS_POSITIONS = new HashMap<>();

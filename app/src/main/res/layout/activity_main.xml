@@ -5,83 +5,40 @@
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.koresuniku.wishmaster.activities.MainActivity"
-    android:orientation="vertical">
+    tools:context="com.koresuniku.wishmaster.activities.MainActivity"
+    android:orientation="vertical"
+    android:background="@color/background_color_custom">
 
-    <ScrollView
+    <android.support.v7.widget.Toolbar
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/scrolview_main"
-        android:fillViewport="false">
+        android:background="?attr/colorPrimary"
+        android:minHeight="?attr/actionBarSize"
+        android:id="@+id/toolbar">
 
-        <LinearLayout
+        <ImageView
+            android:id="@+id/logo"
+            app:srcCompat="@drawable/l1"
+            android:layout_gravity="left"
+            android:layout_height="56dp"
+            android:layout_width="150dp" />
+
+    </android.support.v7.widget.Toolbar>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/background_color_custom"
+        android:layout_margin="1dp"
+        android:id="@+id/expandable_listview_container">
+
+        <ExpandableListView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" >
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:id="@+id/main_image"
-                    android:layout_marginLeft="80dp"
-                    android:layout_marginRight="80dp"
-                    app:srcCompat="@drawable/dvach"
-                    android:layout_height="140dp" />
-
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:background="#c4c4c4"
-                    android:layout_marginLeft="16dp"
-                    android:layout_marginRight="16dp"
-                    android:layout_height="wrap_content">
-
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:background="@color/canva_color_custom"
-                        android:visibility="visible"
-                        android:layout_margin="1dp"
-                        android:layout_gravity="center"
-                        android:layout_height="wrap_content">
-
-                        <TextView
-                            android:text="@string/main_text_first"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:id="@+id/main_textview"
-                            android:padding="16dp"
-                            android:textAppearance="@style/TextAppearance.AppCompat"
-                            android:fontFamily="sans-serif"
-                            android:lineSpacingExtra="3sp"
-                            android:clickable="true"
-                            android:background="?android:attr/selectableItemBackground"
-                            android:textColor="@color/text_custom" />
-                    </FrameLayout>
-                </FrameLayout>
-
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:id="@+id/fragment_container"
-                    >
-
-                </FrameLayout>
-
-
-            </LinearLayout>
-        </LinearLayout>
-    </ScrollView>
-
-    <TextView
-        android:text="@string/loading_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/boards_loading"
-        android:textColor="@color/colorPrimary"
-        android:gravity="center"
-        android:layout_marginTop="16dp" />
+            android:layout_height="match_parent"
+            android:id="@+id/expandablelistview"
+            android:dividerHeight="1dp"
+            android:headerDividersEnabled="false"
+            android:footerDividersEnabled="false" />
+    </FrameLayout>
 
 </LinearLayout>

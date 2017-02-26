@@ -366,46 +366,46 @@ public class PostFragment extends android.support.v4.app.Fragment {
 
         @Override
         protected URL doInBackground(Void... voids) {
-            try {
-                Log.i(LOG_TAG, "Inside fetchCaptchaImage");
-                URL getCaptchaImageId;
-                if (mActivity == null) {
-                    getCaptchaImageId = new URL("https://2ch.hk/api/captcha/2chaptcha/id?board="
-                            + ThreadsActivity.intentBoard);
-                } else {
-                    getCaptchaImageId = new URL("https://2ch.hk/api/captcha/2chaptcha/id?board="
-                            + SingleThreadActivity.intentBoard
-                            + "&thread="
-                            + SingleThreadActivity.intentThreadNumber);
-                }
-                HttpURLConnection connection = (HttpURLConnection) getCaptchaImageId.openConnection();
-                connection.setRequestMethod("GET");
-                connection.connect();
-
-                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                StringBuilder builder = new StringBuilder();
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    builder.append(line);
-                }
-
-                JSONObject getId = new JSONObject(builder.toString());
-                captchaId = getId.getString("id");
-
-                String getImage = "https://2ch.hk/api/captcha/2chaptcha/image/";
-                URL preparedUrl = new URL(getImage + captchaId);
-
-                Log.i(LOG_TAG, "ID " + getCaptchaImageId);
-                Log.i(LOG_TAG, "Captcha image " + preparedUrl.toString());
-
-                return preparedUrl;
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                Log.i(LOG_TAG, "Inside fetchCaptchaImage");
+//                URL getCaptchaImageId;
+//                if (mActivity == null) {
+//                    getCaptchaImageId = new URL("https://2ch.hk/api/captcha/2chaptcha/id?board="
+//                            + ThreadsActivity.intentBoard);
+//                } else {
+//                    getCaptchaImageId = new URL("https://2ch.hk/api/captcha/2chaptcha/id?board="
+//                            + SingleThreadActivity.intentBoard
+//                            + "&thread="
+//                            + SingleThreadActivity.intentThreadNumber);
+//                }
+//                HttpURLConnection connection = (HttpURLConnection) getCaptchaImageId.openConnection();
+//                connection.setRequestMethod("GET");
+//                connection.connect();
+//
+//                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+//                StringBuilder builder = new StringBuilder();
+//                String line;
+//                while ((line = reader.readLine()) != null) {
+//                    builder.append(line);
+//                }
+//
+//                JSONObject getId = new JSONObject(builder.toString());
+//                captchaId = getId.getString("id");
+//
+//                String getImage = "https://2ch.hk/api/captcha/2chaptcha/image/";
+//                URL preparedUrl = new URL(getImage + captchaId);
+//
+//                Log.i(LOG_TAG, "ID " + getCaptchaImageId);
+//                Log.i(LOG_TAG, "Captcha image " + preparedUrl.toString());
+//
+//                return preparedUrl;
+//            } catch (MalformedURLException e) {
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
             return null;
         }
 
@@ -431,7 +431,7 @@ public class PostFragment extends android.support.v4.app.Fragment {
                 reqEntity.addPart("json", new StringBody("1"));
                 reqEntity.addPart("task", new StringBody("post"));
                 if (mActivity == null) {
-                    reqEntity.addPart("board", new StringBody(ThreadsActivity.intentBoard));
+//                    reqEntity.addPart("board", new StringBody(ThreadsActivity.intentBoard));
                     reqEntity.addPart("thread", new StringBody("0"));
                 } else {
                     reqEntity.addPart("board", new StringBody(SingleThreadActivity.intentBoard));

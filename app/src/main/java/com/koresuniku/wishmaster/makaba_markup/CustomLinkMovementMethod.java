@@ -1,4 +1,4 @@
-package com.koresuniku.wishmaster.utilities;
+package com.koresuniku.wishmaster.makaba_markup;
 
 
 import android.content.Context;
@@ -20,8 +20,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
-import com.koresuniku.wishmaster.R;
 import com.koresuniku.wishmaster.activities.SingleThreadActivity;
+import com.koresuniku.wishmaster.utilities.Constants;
 
 import java.util.ArrayList;
 

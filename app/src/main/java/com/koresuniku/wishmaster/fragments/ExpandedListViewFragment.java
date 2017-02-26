@@ -54,7 +54,7 @@ public class ExpandedListViewFragment extends Fragment {
 
     }
 
-    int totalChilds = 0;
+    //int totalChilds = 0;
 
     private void createAdapterForExpandedListView() {
         ArrayList<Map<String, String>> groupData;
@@ -165,21 +165,7 @@ public class ExpandedListViewFragment extends Fragment {
         );
 
         mExpandableListView.setAdapter(adapter);
-        MainActivity.mScrollView.setSmoothScrollingEnabled(true);
-        MainActivity.mLoadingTextView.setVisibility(View.GONE);
 
-        MainActivity.mScrollView.fullScroll(ScrollView.FOCUS_UP);
-        MainActivity.mScrollView.smoothScrollTo(0, 0);
-//        MainActivity.mScrollView.scrollTo(mScrollView.getTop(), mScrollView.getTop());
-
-        if (isTablet()) {
-            Log.i("exp", "isTablet");
-            setListViewHeightBasedOnChildren(mExpandableListView, 1);
-        } else {
-            Log.i("exp", "isPhone");
-            setListViewHeightBasedOnChildren(mExpandableListView, 0);
-        }
-        MainActivity.mScrollView.setVisibility(View.VISIBLE);
         //Log.v(LOG_TAG, String.valueOf(adapter.getGroupCount()));
 
         mExpandableListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
@@ -228,13 +214,6 @@ public class ExpandedListViewFragment extends Fragment {
                         childs = japaneseBoards.length;
                         break;
                 }
-                totalChilds += childs;
-                if (isTablet()) {
-                    setListViewHeightBasedOnChildren(mExpandableListView, totalChilds, true);
-                } else {
-                    setListViewHeightBasedOnChildren(mExpandableListView, totalChilds);
-                }
-                Log.v("OnExpand", String.valueOf(totalChilds));
 
             }
         });
@@ -272,13 +251,8 @@ public class ExpandedListViewFragment extends Fragment {
                         childs = japaneseBoards.length;
                         break;
                 }
-                totalChilds = totalChilds - childs;
-                if (isTablet()) {
-                    setListViewHeightBasedOnChildren(mExpandableListView, totalChilds + 1);
-                } else {
-                    setListViewHeightBasedOnChildren(mExpandableListView, totalChilds);
-                }
-                Log.v("OnCollapse", String.valueOf(totalChilds));
+
+
             }
         });
 
@@ -347,49 +321,4 @@ public class ExpandedListViewFragment extends Fragment {
         }
     }
 
-    public static void setListViewHeightBasedOnChildren(ListView listView, int childs) {
-        ListAdapter listAdapter = listView.getAdapter();
-        if (listAdapter == null) {
-            return;
-        }
-
-        int totalHeight = 0;
-        for (int i = 0; i < listAdapter.getCount(); i++) {
-            View listItem = listAdapter.getView(i, null, listView);
-            listItem.measure(0, 0);
-            totalHeight += listItem.getMeasuredHeight();
-        }
-
-        Log.i("expanded list view ", "ex init");
-
-        ViewGroup.LayoutParams params = listView.getLayoutParams();
-        params.height = totalHeight * 3 + (listView.getDividerHeight() * (listAdapter.getCount() - 1)) - 9;
-
-        params.height -= childs * 9;
-        listView.setLayoutParams(params);
-        listView.requestLayout();
-    }
-
-    public static void setListViewHeightBasedOnChildren(ListView listView, int childs, boolean b) {
-        ListAdapter listAdapter = listView.getAdapter();
-        if (listAdapter == null) {
-            return;
-        }
-
-        int totalHeight = 0;
-        for (int i = 0; i < listAdapter.getCount(); i++) {
-            View listItem = listAdapter.getView(i, null, listView);
-            listItem.measure(0, 0);
-            totalHeight += listItem.getMeasuredHeight();
-        }
-
-        Log.i("expanded list view ", "ex init");
-
-        ViewGroup.LayoutParams params = listView.getLayoutParams();
-        params.height = totalHeight * 3 + (listView.getDividerHeight() * (listAdapter.getCount() - 1)) - 18;
-
-        params.height -= childs * 6;
-        listView.setLayoutParams(params);
-        listView.requestLayout();
-    }
 }

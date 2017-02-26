@@ -26,4 +26,5 @@
     <string name="spinner_text">опции</string>
     <string name="collapsed_thread_text">Скрытый тред</string>
     <string name="pre_answers">Ответы:</string>
+    <string name="app_name_text">Wishmaster</string>
 </resources>

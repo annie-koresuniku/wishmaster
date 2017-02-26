@@ -66,7 +66,7 @@ import com.koresuniku.wishmaster.ui.UIUtilities;
 import com.koresuniku.wishmaster.utilities.CacheReduce;
 import com.koresuniku.wishmaster.utilities.CommentTagHandler;
 import com.koresuniku.wishmaster.utilities.Constants;
-import com.koresuniku.wishmaster.utilities.CustomLinkMovementMethod;
+import com.koresuniku.wishmaster.makaba_markup.CustomLinkMovementMethod;
 import com.koresuniku.wishmaster.utilities.FetchPath;
 import com.koresuniku.wishmaster.utilities.SwipeRefreshLayoutBottom;
 import com.koresuniku.wishmaster.utilities.TouchImageView;

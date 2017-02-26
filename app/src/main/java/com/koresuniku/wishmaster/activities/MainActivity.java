@@ -1,57 +1,52 @@
 package com.koresuniku.wishmaster.activities;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.SearchManager;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.SearchView;
-import android.text.Html;
-import android.text.SpannableStringBuilder;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ExpandableListView;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
+import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.koresuniku.wishmaster.R;
+import com.koresuniku.wishmaster.adapters.BoardsExpandableListViewAdapter;
+import com.koresuniku.wishmaster.boards_database.BoardsDatabaseUtils;
 import com.koresuniku.wishmaster.boards_database.DataBaseHelper;
-import com.koresuniku.wishmaster.fragments.ExpandedListViewFragment;
+import com.koresuniku.wishmaster.easter_eggs.CommonEasterEggs;
+import com.koresuniku.wishmaster.files_utils.CommonFilesHandle;
+import com.koresuniku.wishmaster.ui.UIUtilities;
 import com.koresuniku.wishmaster.utilities.Constants;
 import com.koresuniku.wishmaster.boards_database.BoardsContract;
-import com.koresuniku.wishmaster.boards_database.BoardsHelper;
+import com.koresuniku.wishmaster.utilities.DatabaseUtilities;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
     private final static String LOG_TAG = MainActivity.class.getSimpleName();
@@ -67,12 +62,10 @@ public class MainActivity extends AppCompatActivity {
     public static String[] techBoards;
     public static String[] japaneseBoards;
 
-    private TextView mMainTextView;
-    public static ScrollView mScrollView;
-    public static TextView mLoadingTextView;
-    private LinearLayout mMainLinearLayout;
+    public LinearLayout mMainLinearLayout;
 
-    private String mBText;
+    private ExpandableListView mExpandableListView;
+    private TextView mAppNameTextView;
 
     public static String[] projection = {
             BoardsContract.BoardsEntry._ID,
@@ -80,14 +73,6 @@ public class MainActivity extends AppCompatActivity {
             BoardsContract.BoardsEntry.COLUMN_ID,
             BoardsContract.BoardsEntry.COLUMN_DESC
     };
-
-    private BoardsHelper mBoardsHelper;
-
-
-    @Override
-    protected void onRestart() {
-        super.onRestart();
-    }
 
     @Override
     protected void onResume() {
@@ -98,41 +83,29 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-
-        SharedPreferences sharedPreferences =
-                PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        int jill = Integer.parseInt(sharedPreferences.getString(
-                Constants.JILL_STRING, String.valueOf(Constants.JILL_COUNTER)));
-        Log.i(LOG_TAG, "int jill " + jill);
-        if (jill >= 1) {
-            int orientation = getResources().getConfiguration().orientation;
-            if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-                mMainLinearLayout.setBackgroundResource(R.drawable.jill_ver);
-            } else {
-                mMainLinearLayout.setBackgroundResource(R.drawable.jill_land);
-            }
-        }
+        CommonEasterEggs.checkIfGill(this);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_main);
 
         Log.i(LOG_TAG, "inside on create");
-        createFolderForContent();
+        CommonFilesHandle.createFolderForContent();
+
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        getSupportActionBar().setTitle("");
+
 
         if (Build.VERSION.SDK_INT >= 23) {
             new AsyncTask<Void, Void, Void>() {
+                @SuppressLint("NewApi")
                 @Override
                 protected Void doInBackground(Void... voids) {
                     if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                             != PackageManager.PERMISSION_GRANTED) {
-                        // Should we show an explanation?
-                        if (shouldShowRequestPermissionRationale(
-                                Manifest.permission.READ_EXTERNAL_STORAGE)) {
-                            // Explain to the user why we need to read the contacts
-                        }
                         requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                                 MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
                     }
@@ -142,32 +115,38 @@ public class MainActivity extends AppCompatActivity {
 
             }.execute();
         }
-        mMainLinearLayout = (LinearLayout) findViewById(R.id.activity_main);
-        mLoadingTextView = (TextView) findViewById(R.id.boards_loading);
-        mMainTextView = (TextView) findViewById(R.id.main_textview);
-        mMainTextView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getApplication(), ThreadsActivity.class);
-                intent.putExtra(Constants.BOARD, "b");
-                intent.putExtra(Constants.PAGE, "0");
-                startActivity(intent);
-            }
-        });
-        mBoardsHelper = new BoardsHelper(getApplicationContext());
-        mScrollView = (ScrollView) findViewById(R.id.scrolview_main);
-        mScrollView.setVisibility(View.GONE);
 
-        setupMainTextView();
-        checkDatabaseIfExists();
-    }
+        mExpandableListView = (ExpandableListView) findViewById(R.id.expandablelistview);
 
-    private void createFolderForContent() {
-        File myDirectory = new File(Environment.getExternalStorageDirectory() + "/Download", "Wishmaster");
-        Constants.DIRECTORY = myDirectory;
-        if (!myDirectory.exists()) {
-            myDirectory.mkdirs();
+
+        try {
+            DatabaseUtilities.copyDataBase(this);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        BoardsDatabaseUtils.initializeBoards(this);
+        //createAdapterForExpandedListView();
+
+
+        ArrayList<String[]> childBoardsToSend = new ArrayList<>();
+        childBoardsToSend.add(adultBoards);
+        childBoardsToSend.add(gamesBoards);
+        childBoardsToSend.add(politicsBoards);
+        childBoardsToSend.add(usersBoards);
+        childBoardsToSend.add(differentBoards);
+        childBoardsToSend.add(creativityBoards);
+        childBoardsToSend.add(subjectsBoards);
+        childBoardsToSend.add(techBoards);
+        childBoardsToSend.add(japaneseBoards);
+
+        BoardsExpandableListViewAdapter belva = new BoardsExpandableListViewAdapter(this, childBoardsToSend);
+        mExpandableListView.setAdapter(belva);
+
+        mExpandableListView.setDividerHeight(1);
+
+        mExpandableListView.setGroupIndicator(null);
+
+
     }
 
     @Override
@@ -225,147 +204,263 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void setupMainTextView() {
-        mBText = "<font color=\"#FF7000\" href=\"https://2ch.hk/b/index.json\">/Б/</font>";
-        SpannableStringBuilder builder = new SpannableStringBuilder();
-        //builder.append(" www.google.ua " );
-        builder.append(Constants.MAIN_TEXT_FIRST);
-        builder.append(mBText);
-        builder.append(Constants.MAIN_TEXT_SECOND);
+    private void createAdapterForExpandedListView() {
+        ArrayList<Map<String, String>> groupData;
+        ArrayList<Map<String, String>> childDataItem;
+        ArrayList<ArrayList<Map<String, String>>> childData;
+        Map<String, String> map;
 
-        mMainTextView.setText(Html.fromHtml(builder.toString()), TextView.BufferType.SPANNABLE);
-    }
-
-    private void checkDatabaseIfExists() {
-        Log.v(LOG_TAG, "Inside checkDatabaseIfExists()");
-
-        DataBaseHelper dbManager = new DataBaseHelper(this);
-        Log.v(LOG_TAG, "Database is there with version: " + dbManager.getReadableDatabase().getVersion());
-
-        SQLiteDatabase db = dbManager.getReadableDatabase();
-        Log.i(LOG_TAG, "db is not null " + (db != null));
-
-        Log.i(LOG_TAG, db.getPath());
-        try {
-            copyDataBase();
-        } catch (IOException e) {
-            e.printStackTrace();
+        groupData = new ArrayList<>();
+        for (String group : Constants.SUBJECTS) {
+            //Log.v(LOG_TAG, group);
+            map = new HashMap<>();
+            map.put("groupName", group);
+            groupData.add(map);
         }
 
-        Cursor cursorD = db.rawQuery("SELECT * FROM boards;", null);
-        Log.v(LOG_TAG, "Query Result:" + cursorD.getCount());
-        cursorD.close();
-        db.close();
-        dbManager.close();
+        Log.i("LOG_TAG", "AdultBoards " + adultBoards);
+        //Log.v(LOG_TAG, groupData.toString());
+        String groupFrom[] = new String[]{"groupName"};
+        int groupTo[] = new int[]{android.R.id.text1};
 
-        initializeBoards();
+        childData = new ArrayList<>();
 
-    }
-
-    private void copyDataBase() throws IOException {
-        final String DATABASE_PATH = "/data/data/com.koresuniku.wishmaster/databases/";
-        final String DATABASE_NAME = "database.db";
-        String outFileName = DATABASE_PATH + DATABASE_NAME;
-        OutputStream myOutput = new FileOutputStream(outFileName);
-        InputStream myInput = getApplicationContext().getAssets().open(DATABASE_NAME);
-
-        byte[] buffer = new byte[1024];
-        int length;
-        while ((length = myInput.read(buffer)) > 0) {
-            myOutput.write(buffer, 0, length);
+        childDataItem = new ArrayList<>();
+        for (String element : adultBoards) {
+            map = new HashMap<>();
+            map.put("boardName", element);
+            childDataItem.add(map);
         }
-        myInput.close();
-        myOutput.flush();
-        myOutput.close();
-    }
+        childData.add(childDataItem);
 
-    private void initializeBoards() {
-        Log.v(LOG_TAG, "Inside startUploadingBoardsToAdapter()");
+        childDataItem = new ArrayList<>();
+        for (String element : gamesBoards) {
+            map = new HashMap<>();
+            map.put("boardName", element);
+            childDataItem.add(map);
+        }
+        childData.add(childDataItem);
 
-        List<String> adultBoardsL = new ArrayList<>();
-        List<String> gamesBoardsL = new ArrayList<>();
-        List<String> politicsBoardsL = new ArrayList<>();
-        List<String> usersBoardsL = new ArrayList<>();
-        List<String> differentBoardsL = new ArrayList<>();
-        List<String> creativityBoardsL = new ArrayList<>();
-        List<String> subjectsBoardsL = new ArrayList<>();
-        List<String> techBoardsL = new ArrayList<>();
-        List<String> japaneseBoardsL = new ArrayList<>();
+        childDataItem = new ArrayList<>();
+        for (String element : politicsBoards) {
+            map = new HashMap<>();
+            map.put("boardName", element);
+            childDataItem.add(map);
+        }
+        childData.add(childDataItem);
 
-        DataBaseHelper dbManager = new DataBaseHelper(this);
-        Log.v(LOG_TAG, "Database is there with version: " + dbManager.getReadableDatabase().getVersion());
+        childDataItem = new ArrayList<>();
+        for (String element : usersBoards) {
+            map = new HashMap<>();
+            map.put("boardName", element);
+            childDataItem.add(map);
+        }
+        childData.add(childDataItem);
 
-        SQLiteDatabase dbase = dbManager.getReadableDatabase();
-        Log.i(LOG_TAG, "db is not null " + (dbase != null));
+        childDataItem = new ArrayList<>();
+        for (String element : differentBoards) {
+            map = new HashMap<>();
+            map.put("boardName", element);
+            childDataItem.add(map);
+        }
+        childData.add(childDataItem);
 
-        Log.i(LOG_TAG, dbase.getPath());
-        Cursor cursor = dbase.query(
-                BoardsContract.BoardsEntry.TABLE_NAME,
-                projection, null, null, null, null, null
+        childDataItem = new ArrayList<>();
+        for (String element : creativityBoards) {
+            map = new HashMap<>();
+            map.put("boardName", element);
+            childDataItem.add(map);
+        }
+        childData.add(childDataItem);
+
+        childDataItem = new ArrayList<>();
+        for (String element : subjectsBoards) {
+            map = new HashMap<>();
+            map.put("boardName", element);
+            childDataItem.add(map);
+        }
+        childData.add(childDataItem);
+
+        childDataItem = new ArrayList<>();
+        for (String element : techBoards) {
+            map = new HashMap<>();
+            map.put("boardName", element);
+            childDataItem.add(map);
+        }
+        childData.add(childDataItem);
+
+        childDataItem = new ArrayList<>();
+        for (String element : japaneseBoards) {
+            map = new HashMap<>();
+            map.put("boardName", element);
+            childDataItem.add(map);
+        }
+        childData.add(childDataItem);
+
+        String[] childFrom = new String[]{"boardName"};
+        int[] childTo = new int[]{R.id.board_item};
+
+        SimpleExpandableListAdapter adapter = new SimpleExpandableListAdapter(
+                this,
+                groupData,
+                android.R.layout.simple_expandable_list_item_1,
+                groupFrom,
+                groupTo,
+                childData,
+                R.layout.boards_listview_layout,
+                childFrom,
+                childTo
         );
 
-        while (cursor.moveToNext()) {
-            int index = cursor.getColumnIndex(BoardsContract.BoardsEntry.COLUMN_SUBJECT);
-            String subject = cursor.getString(index);
+        mExpandableListView.setAdapter(adapter);
 
-            for (int i = 0; i < Constants.SUBJECTS.length; i++) {
-                if (subject.equals(Constants.SUBJECTS[i])) {
-                    int indexDesc = cursor.getColumnIndex(BoardsContract.BoardsEntry.COLUMN_DESC);
-                    String desc = cursor.getString(indexDesc);
-                    switch (i) {
-                        case 0:
-                            adultBoardsL.add(desc);
-                            break;
-                        case 1:
-                            gamesBoardsL.add(desc);
-                            break;
-                        case 2:
-                            politicsBoardsL.add(desc);
-                            break;
-                        case 3:
-                            usersBoardsL.add(desc);
-                            break;
-                        case 4:
-                            differentBoardsL.add(desc);
-                            break;
-                        case 5:
-                            creativityBoardsL.add(desc);
-                            break;
-                        case 6:
-                            subjectsBoardsL.add(desc);
-                            break;
-                        case 7:
-                            techBoardsL.add(desc);
-                            break;
-                        case 8:
-                            japaneseBoardsL.add(desc);
-                            break;
-                    }
+        //Log.v(LOG_TAG, String.valueOf(adapter.getGroupCount()));
+
+        mExpandableListView.setOnGroupClickListener(new ExpandableListView.OnGroupClickListener() {
+            @Override
+            public boolean onGroupClick(ExpandableListView expandableListView, View view, int i, long l) {
+
+                Log.i(LOG_TAG, "childs currently " + expandableListView.getChildCount());
+
+
+                if (expandableListView.isGroupExpanded(i)) {
+                    expandableListView.collapseGroup(i);
+                } else {
+                    expandableListView.expandGroup(i);
                 }
+                return true;
             }
-        }
 
-        adultBoards = formatList(adultBoardsL);
-        gamesBoards = formatList(gamesBoardsL);
-        politicsBoards = formatList(politicsBoardsL);
-        usersBoards = formatList(usersBoardsL);
-        differentBoards = formatList(differentBoardsL);
-        creativityBoards = formatList(creativityBoardsL);
-        subjectsBoards = formatList(subjectsBoardsL);
-        techBoards = formatList(techBoardsL);
-        japaneseBoards = formatList(japaneseBoardsL);
+        });
+        mExpandableListView.setOnGroupExpandListener(new ExpandableListView.OnGroupExpandListener() {
+            @Override
+            public void onGroupExpand(int i) {
+                int childs = 0;
+                switch (i) {
+                    case 0:
+                        childs = adultBoards.length;
+                        break;
+                    case 1:
+                        childs = gamesBoards.length;
+                        break;
+                    case 2:
+                        childs = politicsBoards.length;
+                        break;
+                    case 3:
+                        childs = usersBoards.length;
+                        break;
+                    case 4:
+                        childs = differentBoards.length;
+                        break;
+                    case 5:
+                        childs = creativityBoards.length;
+                        break;
+                    case 6:
+                        childs = subjectsBoards.length;
+                        break;
+                    case 7:
+                        childs = techBoards.length;
+                        break;
+                    case 8:
+                        childs = japaneseBoards.length;
+                        break;
+                }
 
-        getFragmentManager().beginTransaction()
-                .add(R.id.fragment_container, new ExpandedListViewFragment())
-                .commit();
+            }
+        });
 
-        dbManager.close();
-        dbase.close();
-        cursor.close();
+        mExpandableListView.setOnGroupCollapseListener(new ExpandableListView.OnGroupCollapseListener() {
+            @Override
+            public void onGroupCollapse(int i) {
+                int childs = 0;
+                switch (i) {
+                    case 0:
+                        childs = adultBoards.length;
+                        break;
+                    case 1:
+                        childs = gamesBoards.length;
+                        break;
+                    case 2:
+                        childs = politicsBoards.length;
+                        break;
+                    case 3:
+                        childs = usersBoards.length;
+                        break;
+                    case 4:
+                        childs = differentBoards.length;
+                        break;
+                    case 5:
+                        childs = creativityBoards.length;
+                        break;
+                    case 6:
+                        childs = subjectsBoards.length;
+                        break;
+                    case 7:
+                        childs = techBoards.length;
+                        break;
+                    case 8:
+                        childs = japaneseBoards.length;
+                        break;
+                }
+
+
+            }
+        });
+
+        mExpandableListView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+            @Override
+            public boolean onChildClick(ExpandableListView expandableListView, View view, int i, int i1, long l) {
+
+
+                TextView descriptionTextView = (TextView) view.findViewById(R.id.board_item);
+                String description = descriptionTextView.getText().toString();
+
+//                Cursor cursor = mBoardsDatabaseReadable.query(
+//                        BoardsContract.BoardsEntry.TABLE_NAME,
+//                        projection, BoardsContract.BoardsEntry.COLUMN_DESC + " =? ",
+//                        new String[] { description }, null, null, null
+//                );
+                DataBaseHelper dbManager = new DataBaseHelper(getApplicationContext());
+                //Log.v(LOG_TAG,"Database is there with version: "+dbManager.getReadableDatabase().getVersion());
+
+                SQLiteDatabase db = dbManager.getReadableDatabase();
+                //Log.i(LOG_TAG, "db is not null " + (db != null));
+
+                //Log.i(LOG_TAG, db.getPath());
+                //copyDataBase();
+//        Cursor cursorD = db.query(
+//                BoardsContract.BoardsEntry.TABLE_NAME,
+//                projection, null, null, null, null, null
+//        );
+                Cursor cursor = db.query(
+                        BoardsContract.BoardsEntry.TABLE_NAME,
+                        projection, BoardsContract.BoardsEntry.COLUMN_DESC + " =? ",
+                        new String[]{description}, null, null, null
+                );
+
+                Log.v("OnChildClick", "Cursor found " + cursor.getCount() + " coincidences");
+
+                cursor.moveToFirst();
+                int index = cursor.getColumnIndex(BoardsContract.BoardsEntry.COLUMN_ID);
+                String id = cursor.getString(index);
+                cursor.close();
+                ///cursor.close();
+                db.close();
+                dbManager.close();
+
+                Intent intent = new Intent(getApplicationContext(), ThreadsActivity.class);
+                Log.i("id ", id);
+                intent.putExtra(Constants.BOARD, id);
+                intent.putExtra(Constants.PAGE, "0");
+
+                startActivity(intent);
+                return true;
+            }
+        });
 
     }
 
-    private String[] formatList(List<String> list) {
+    public String[] formatList(List<String> list) {
         String[] result = new String[list.size()];
 
         for (int i = 0; i < result.length; i++) {
@@ -375,237 +470,8 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
-    public class WriteToBoardsDatabaseTask extends AsyncTask<Void, Void, ArrayList<String[]>> {
-        private String[] subjects;
-        private String[] ids;
-        private String[] descs;
-        private String[] projection = {
-                BoardsContract.BoardsEntry.COLUMN_SUBJECT,
-                BoardsContract.BoardsEntry.COLUMN_ID,
-                BoardsContract.BoardsEntry.COLUMN_DESC
-        };
+    private void setChildsColor() {
 
-        private Context mContext;
-
-
-        BoardsHelper boardsHelper;
-        SQLiteDatabase database;
-
-        public WriteToBoardsDatabaseTask(Context context) {
-            this.mContext = context;
-        }
-
-        @Override
-        protected ArrayList<String[]> doInBackground(Void... voids) {
-            try {
-                URL url = new URL("https://2ch.hk/makaba/mobile.fcgi?task=get_boards");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod("GET");
-                connection.connect();
-
-                StringBuilder builder = new StringBuilder();
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(connection.getInputStream()));
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    builder.append(line);
-                }
-
-                String rawJSON = builder.toString();
-
-                formatJSON(rawJSON);
-
-                ArrayList<String[]> arrayList = new ArrayList<>();
-                arrayList.add(subjects);
-                arrayList.add(ids);
-                arrayList.add(descs);
-
-                return arrayList;
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<String[]> strings) {
-            boardsHelper = new BoardsHelper(mContext);
-            database = boardsHelper.getWritableDatabase();
-
-            String[] localSubjects = subjects;
-            String[] localIds = ids;
-            String[] localDescs = descs;
-
-            for (int i = 0; i < localIds.length; i++) {
-                ContentValues values = new ContentValues();
-
-                values.put(BoardsContract.BoardsEntry.COLUMN_SUBJECT, localSubjects[i]);
-                values.put(BoardsContract.BoardsEntry.COLUMN_ID, localIds[i]);
-                values.put(BoardsContract.BoardsEntry.COLUMN_DESC, localDescs[i]);
-
-                long rowId = database.insert(
-                        BoardsContract.BoardsEntry.TABLE_NAME,
-                        null,
-                        values
-                );
-            }
-            localSubjects = null;
-            localIds = null;
-            localDescs = null;
-            initializeBoards();
-
-
-            //checkDatabase();
-        }
-
-        private void checkDatabase() {
-            Cursor cursor = database.query(
-                    BoardsContract.BoardsEntry.TABLE_NAME,
-                    projection, null, null, null, null, null
-            );
-
-            Log.v("Boards count", String.valueOf(cursor.getCount()));
-        }
-
-        private void formatJSON(String rawJSON) throws JSONException {
-            JSONObject main = new JSONObject(rawJSON);
-            List<String> subjectsList = new ArrayList<>();
-            List<String> idsList = new ArrayList<>();
-            List<String> descsList = new ArrayList<>();
-
-            JSONArray adult = main.getJSONArray(BoardsContract.BoardsEntry.ADULT_STRING);
-            for (int i = 0; i < adult.length(); i++) {
-                JSONObject index = adult.getJSONObject(i);
-                subjectsList.add(BoardsContract.BoardsEntry.ADULT_STRING);
-
-                String id = index.getString("id");
-                idsList.add(id);
-
-                String desc = index.getString("name");
-                descsList.add(desc);
-            }
-
-            JSONArray games = main.getJSONArray(BoardsContract.BoardsEntry.GAMES_STRING);
-
-            for (int i = 0; i < games.length(); i++) {
-                JSONObject index = games.getJSONObject(i);
-                subjectsList.add(BoardsContract.BoardsEntry.GAMES_STRING);
-
-                String id = index.getString("id");
-                idsList.add(id);
-
-                String desc = index.getString("name");
-                descsList.add(desc);
-            }
-
-            JSONArray politics = main.getJSONArray(BoardsContract.BoardsEntry.POLITICS_STRING);
-            for (int i = 0; i < politics.length(); i++) {
-                JSONObject index = politics.getJSONObject(i);
-                subjectsList.add(BoardsContract.BoardsEntry.POLITICS_STRING);
-
-                String id = index.getString("id");
-                idsList.add(id);
-
-                String desc = index.getString("name");
-                descsList.add(desc);
-            }
-
-            JSONArray users = main.getJSONArray(BoardsContract.BoardsEntry.USERS_STRING);
-            for (int i = 0; i < users.length(); i++) {
-                JSONObject index = users.getJSONObject(i);
-                subjectsList.add(BoardsContract.BoardsEntry.USERS_STRING);
-
-                String id = index.getString("id");
-                idsList.add(id);
-
-                String desc = index.getString("name");
-                descsList.add(desc);
-            }
-
-            JSONArray different = main.getJSONArray(BoardsContract.BoardsEntry.DIFFERENT_STRING);
-            for (int i = 0; i < different.length(); i++) {
-                JSONObject index = different.getJSONObject(i);
-                subjectsList.add(BoardsContract.BoardsEntry.DIFFERENT_STRING);
-
-                String id = index.getString("id");
-                idsList.add(id);
-
-                String desc = index.getString("name");
-                descsList.add(desc);
-            }
-
-            JSONArray creativity = main.getJSONArray(BoardsContract.BoardsEntry.CREATIVITY_STRING);
-            for (int i = 0; i < creativity.length(); i++) {
-                JSONObject index = creativity.getJSONObject(i);
-                subjectsList.add(BoardsContract.BoardsEntry.CREATIVITY_STRING);
-
-                String id = index.getString("id");
-                idsList.add(id);
-
-                String desc = index.getString("name");
-                descsList.add(desc);
-            }
-
-            JSONArray subjectsA = main.getJSONArray(BoardsContract.BoardsEntry.SUBJECTS_STRING);
-            for (int i = 0; i < subjectsA.length(); i++) {
-                JSONObject index = subjectsA.getJSONObject(i);
-                subjectsList.add(BoardsContract.BoardsEntry.SUBJECTS_STRING);
-
-                String id = index.getString("id");
-                idsList.add(id);
-
-                String desc = index.getString("name");
-                descsList.add(desc);
-            }
-
-            JSONArray tech = main.getJSONArray(BoardsContract.BoardsEntry.TECH_STRING);
-            for (int i = 0; i < tech.length(); i++) {
-                JSONObject index = tech.getJSONObject(i);
-                subjectsList.add(BoardsContract.BoardsEntry.TECH_STRING);
-
-                String id = index.getString("id");
-                idsList.add(id);
-
-                String desc = index.getString("name");
-                descsList.add(desc);
-            }
-
-            JSONArray japanese = main.getJSONArray(BoardsContract.BoardsEntry.JAPANESE_STRING);
-            for (int i = 0; i < japanese.length(); i++) {
-                JSONObject index = japanese.getJSONObject(i);
-                subjectsList.add(BoardsContract.BoardsEntry.JAPANESE_STRING);
-
-                String id = index.getString("id");
-                idsList.add(id);
-
-                String desc = index.getString("name");
-                descsList.add(desc);
-            }
-
-            //Log.v("My tag", subjectsList.toString());
-            subjects = new String[subjectsList.size()];
-
-            for (int i = 0; i < subjects.length; i++) {
-                subjects[i] = subjectsList.get(i);
-            }
-
-
-            ids = new String[idsList.size()];
-            for (int i = 0; i < ids.length; i++) {
-                ids[i] = idsList.get(i);
-            }
-
-            descs = new String[descsList.size()];
-            for (int i = 0; i < descs.length; i++) {
-                descs[i] = descsList.get(i);
-            }
-
-
-        }
     }
+
 }

@@ -1,46 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical" android:layout_width="match_parent"
+
+
+<FrameLayout android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/threads_layout_container">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_threads_container">
 
 
-    <ProgressBar
-        style="@android:style/Widget.Material.Light.ProgressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/progressBar"
-        android:layout_gravity="center"
-        tools:visibility="gone" />
-
-    <FrameLayout
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/threads_layout_containe_inner">
+        android:layout_height="match_parent">
 
-        <android.support.v4.widget.SwipeRefreshLayout
-            android:id="@+id/refresh"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <com.github.ksoichiro.android.observablescrollview.ObservableListView
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:id="@+id/threads_listview" />
+                android:id="@+id/loading_image_container">
 
-        </android.support.v4.widget.SwipeRefreshLayout>
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/threads_layout_containe_inner">
+
+                <android.support.v4.widget.SwipeRefreshLayout
+                    android:id="@+id/refresh"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <com.github.ksoichiro.android.observablescrollview.ObservableListView
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:id="@+id/threads_listview" />
+
+                </android.support.v4.widget.SwipeRefreshLayout>
 
 
-    </FrameLayout>
+            </FrameLayout>
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/posting_fragment_container"
-        android:layout_gravity="bottom"
-        android:visibility="visible">
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/posting_fragment_container"
+                android:layout_gravity="bottom"
+                android:visibility="visible">
 
-    </FrameLayout>
+            </FrameLayout>
+        </FrameLayout>
+    </LinearLayout>
+
 
 </FrameLayout>
